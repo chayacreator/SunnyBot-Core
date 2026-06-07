@@ -376,8 +376,15 @@
             z-index: 2; pointer-events: none;
             display: none;
         }
-        .stone.black { display: block; background: radial-gradient(circle at 35% 35%, #444, #000); box-shadow: 2px 2px 6px rgba(0,0,0,0.8); }
-        .stone.white { display: block; background: radial-gradient(circle at 35% 35%, #fff, #c8c8c8); box-shadow: 2px 2px 6px rgba(0,0,0,0.5); }
+        .stone.black { display: block; background: #000; box-shadow: none; border: 1.5px solid #222; }
+        .stone.white { display: block; background: #fff; box-shadow: none; border: 1.5px solid #ddd; }
+
+        @keyframes stoneFlip {
+            0%   { transform: scaleX(1); }
+            40%  { transform: scaleX(0); }
+            100% { transform: scaleX(1); }
+        }
+        .stone.flipping { animation: stoneFlip 0.22s ease-in-out; }
 
         #control-panel {
             width: 100%; display: flex; justify-content: space-around; gap: 8px;
@@ -405,11 +412,75 @@
             border-color: var(--accent-neon);
             box-shadow: 0 0 12px rgba(0, 242, 254, 0.25);
         }
+
+        /* ── TURN ORDER OVERLAY ── */
+        #coin-flip-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(3, 7, 18, 0.88);
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+        }
+        #coin-flip-overlay.active { display: flex; }
+
+        #coin-result-text {
+            font-family: "Orbitron", sans-serif;
+            font-size: 1.5rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            opacity: 0;
+            transition: opacity 0.35s ease;
+            text-shadow: 0 0 24px currentColor;
+        }
+        #coin-result-text.show { opacity: 1; }
+
+        /* ── TURN TIMER ── */
+        #turn-timer-wrap {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.72rem;
+            color: #64748b;
+        }
+        #turn-timer-wrap.visible { display: flex; }
+
+        #turn-timer-bar-bg {
+            width: 80px;
+            height: 5px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        #turn-timer-bar {
+            height: 100%;
+            width: 100%;
+            border-radius: 3px;
+            background: var(--accent-green);
+            transition: width 1s linear, background 0.5s ease;
+        }
+
+        #turn-timer-count {
+            min-width: 24px;
+            text-align: right;
+            font-weight: 700;
+        }
+        #turn-timer-count.warn { color: var(--accent-red); animation: timerPulse 0.5s infinite alternate; }
+
+        @keyframes timerPulse { from { opacity: 1; } to { opacity: 0.4; } }
     </style>
 </head>
 <body>
 
 <div id="input-shield"></div>
+
+<!-- TURN ORDER OVERLAY -->
+<div id="coin-flip-overlay">
+    <div id="coin-result-text"></div>
+</div>
 
 <div id="workspace-layout">
     <div id="game-section">
@@ -428,6 +499,14 @@
                 <span id="book-indicator">📖 BOOK: --</span>
                 <span id="phase-indicator" class="early">EARLY</span>
                 <span>GEN: <span id="brain-games" style="color:var(--accent-purple)">0</span></span>
+            </div>
+            <div style="display:flex;justify-content:center;margin-top:4px;">
+                <div id="turn-timer-wrap">
+                    <span style="color:#475569;font-size:0.6rem;letter-spacing:0.08em;">TURN</span>
+                    <div id="turn-timer-bar-bg"><div id="turn-timer-bar"></div></div>
+                    <span id="turn-timer-count">60</span>
+                    <span style="color:#475569;font-size:0.6rem;">s</span>
+                </div>
             </div>
             <div id="message-box">SYSTEM BOOTING...</div>
         </div>
@@ -490,10 +569,14 @@ let gameHistory = [];
 let isAiVsAiMode = false;
 let heatmapMode = false;
 let currentMonitorTab = 'code';
+let humanColor = BLACK; // コインフリップで変わる
 
 let monitorLogs = [];
 let currentLogIndex = -1;
 let typingIntervalId = null;
+
+let turnTimerIntervalId = null;
+const TURN_TIME_LIMIT = 60;
 
 let localSunnyBotData = {};
 let lastPVLine = [];   
@@ -620,6 +703,11 @@ const hmPhaseEl     = document.getElementById('hm-phase');
 const hmWeightsEl   = document.getElementById('hm-weights');
 const panelCode     = document.getElementById('panel-code');
 const panelHeatmap  = document.getElementById('panel-heatmap');
+const coinOverlayEl = document.getElementById('coin-flip-overlay');
+const coinResultEl  = document.getElementById('coin-result-text');
+const timerWrapEl   = document.getElementById('turn-timer-wrap');
+const timerBarEl    = document.getElementById('turn-timer-bar');
+const timerCountEl  = document.getElementById('turn-timer-count');
 
 // ═══════════════════════════════════════════════
 //  MONITOR TAB SWITCHING
@@ -903,6 +991,76 @@ function renderSideHeatmap() {
 }
 
 // ═══════════════════════════════════════════════
+//  TURN ORDER RANDOMIZER
+// ═══════════════════════════════════════════════
+function runCoinFlip() {
+    return new Promise(resolve => {
+        const humanFirst = Math.random() < 0.5;
+        coinResultEl.className = '';
+        coinResultEl.textContent = '';
+        coinOverlayEl.classList.add('active');
+
+        setTimeout(() => {
+            if (humanFirst) {
+                coinResultEl.style.color = 'var(--accent-neon)';
+                coinResultEl.textContent = 'YOU GO FIRST';
+            } else {
+                coinResultEl.style.color = 'var(--accent-sunny)';
+                coinResultEl.textContent = 'SUNNYBOT GOES FIRST';
+            }
+            coinResultEl.classList.add('show');
+
+            setTimeout(() => {
+                coinOverlayEl.classList.remove('active');
+                resolve(humanFirst);
+            }, 1200);
+        }, 100);
+    });
+}
+
+// ═══════════════════════════════════════════════
+//  TURN TIMER (60s)
+// ═══════════════════════════════════════════════
+function startTurnTimer(onTimeout) {
+    stopTurnTimer();
+    if (isAiVsAiMode) return;
+
+    let remaining = TURN_TIME_LIMIT;
+    timerWrapEl.classList.add('visible');
+    timerCountEl.textContent = remaining;
+    timerCountEl.className = '';
+    timerBarEl.style.width = '100%';
+    timerBarEl.style.background = 'var(--accent-green)';
+
+    turnTimerIntervalId = setInterval(() => {
+        remaining--;
+        const pct = (remaining / TURN_TIME_LIMIT) * 100;
+        timerCountEl.textContent = remaining;
+        timerBarEl.style.width = pct + '%';
+
+        if (remaining <= 10) {
+            timerBarEl.style.background = 'var(--accent-red)';
+            timerCountEl.className = 'warn';
+        } else if (remaining <= 20) {
+            timerBarEl.style.background = 'var(--accent-sunny)';
+        }
+
+        if (remaining <= 0) {
+            stopTurnTimer();
+            onTimeout();
+        }
+    }, 1000);
+}
+
+function stopTurnTimer() {
+    if (turnTimerIntervalId) {
+        clearInterval(turnTimerIntervalId);
+        turnTimerIntervalId = null;
+    }
+    timerWrapEl.classList.remove('visible');
+}
+
+// ═══════════════════════════════════════════════
 //  SYNC
 // ═══════════════════════════════════════════════
 async function syncWithSunnyBotCore() {
@@ -943,11 +1101,23 @@ function updateDisplay() {
         for (let c = 0; c < 8; c++) {
             const cell = boardEl.children[r * 8 + c];
             const stone = cell.querySelector('.stone');
-            if (board[r][c] === BLACK) { stone.className = 'stone black'; blackCount++; stoneCount++; }
-            else if (board[r][c] === WHITE) { stone.className = 'stone white'; whiteCount++; stoneCount++; }
-            else { stone.className = 'stone'; }
+            const prevClass = stone.className;
+            let nextClass;
+            if (board[r][c] === BLACK) { nextClass = 'stone black'; blackCount++; stoneCount++; }
+            else if (board[r][c] === WHITE) { nextClass = 'stone white'; whiteCount++; stoneCount++; }
+            else { nextClass = 'stone'; }
+
+            if (prevClass !== nextClass && prevClass !== 'stone' && nextClass !== 'stone') {
+                // 色が反転した駒にアニメーション
+                stone.className = nextClass + ' flipping';
+                stone.addEventListener('animationend', () => {
+                    stone.classList.remove('flipping');
+                }, { once: true });
+            } else {
+                stone.className = nextClass;
+            }
             cell.classList.remove('legal-move');
-            if (!isAiVsAiMode && currentTurn === BLACK && legalMoves.some(m => m.r===r && m.c===c)) {
+            if (!isAiVsAiMode && currentTurn === humanColor && legalMoves.some(m => m.r===r && m.c===c)) {
                 cell.classList.add('legal-move');
             }
         }
@@ -963,18 +1133,31 @@ function updateDisplay() {
     const xRate = (localSunnyBotData.humanPattern?.xMoveTendency||0) / (localSunnyBotData.humanPattern?.clickCount||1);
     const openBias = (localSunnyBotData.humanPattern?.averageOpenness||0).toFixed(1);
 
-    if (currentTurn === BLACK) {
-        statusBlackEl.classList.add('active'); statusWhiteEl.classList.remove('active');
+    if (currentTurn === humanColor) {
+        statusBlackEl.classList.toggle('active', humanColor === BLACK);
+        statusWhiteEl.classList.toggle('active', humanColor === WHITE);
         if (!isAiVsAiMode) {
             messageBoxEl.innerHTML = `YOUR TURN [${legalMoves.length} moves] | X-RATE:${(xRate*100).toFixed(0)}% OPEN:${openBias}`;
             shieldEl.style.display = 'none';
             pushCodeLog('humanMove');
+            // タイマー開始（時間切れ→ランダム合法手を自動選択）
+            startTurnTimer(() => {
+                const lm = getLegalMoves(board, humanColor);
+                if (lm.length > 0) {
+                    const autoMove = lm[Math.floor(Math.random() * lm.length)];
+                    messageBoxEl.innerHTML = `<span style="color:var(--accent-red)">⏱ TIME OVER — AUTO MOVE</span>`;
+                    handleCellClick(autoMove.r, autoMove.c);
+                }
+            });
         } else {
+            stopTurnTimer();
             messageBoxEl.innerHTML = `<span style="color:var(--accent-purple)">[STREAMING] SUNNY_ALPHA ANALYSIS...</span>`;
             shieldEl.style.display = 'block';
         }
     } else {
-        statusWhiteEl.classList.add('active'); statusBlackEl.classList.remove('active');
+        stopTurnTimer();
+        statusBlackEl.classList.toggle('active', humanColor !== BLACK);
+        statusWhiteEl.classList.toggle('active', humanColor !== WHITE);
         shieldEl.style.display = 'block';
         if (64 - stoneCount <= 13) {
             messageBoxEl.innerHTML = `<span style="color:var(--accent-red);font-weight:bold;">[SOLVER ACTIVE] SOLVING ENDGAME...</span>`;
@@ -992,10 +1175,11 @@ function updateDisplay() {
         } else {
             const passDelay = isAiVsAiMode ? 1 : 150;
             messageBoxEl.innerHTML = `<span style="color:orange">PASS — HANDOVER ACTIVATED.</span>`;
+            stopTurnTimer();
             setTimeout(() => { 
                 currentTurn = opponent; 
                 updateDisplay(); 
-                runAiRoutine(); 
+                if (currentTurn !== humanColor || isAiVsAiMode) runAiRoutine(); 
             }, passDelay);
         }
     }
@@ -1063,9 +1247,10 @@ function revertMoveInPlace(targetBoard, r, c, revertList) {
 }
 
 async function handleCellClick(r, c) {
-    if (currentTurn !== BLACK || isAiVsAiMode) return;
-    const flips = getFlips(board, r, c, BLACK);
+    if (currentTurn !== humanColor || isAiVsAiMode) return;
+    const flips = getFlips(board, r, c, humanColor);
     if (flips.length === 0) return;
+    stopTurnTimer();
 
     localSunnyBotData.humanPattern.clickCount++;
     if (X_SQUARES.some(p=>p[0]===r&&p[1]===c)) localSunnyBotData.humanPattern.xMoveTendency++;
@@ -1074,10 +1259,10 @@ async function handleCellClick(r, c) {
     const op = getOpenDegree(board, flips);
     localSunnyBotData.humanPattern.averageOpenness = localSunnyBotData.humanPattern.averageOpenness * 0.9 + op * 0.1;
 
-    gameHistory.push({player: BLACK, r, c});
-    executeMoveInPlace(board, r, c, flips, BLACK);
+    gameHistory.push({player: humanColor, r, c});
+    executeMoveInPlace(board, r, c, flips, humanColor);
     await SunnyBotCore.commitDataAPI(localSunnyBotData);
-    currentTurn = WHITE;
+    currentTurn = humanColor === BLACK ? WHITE : BLACK;
     updateDisplay();
     runAiRoutine();
 }
@@ -1086,13 +1271,14 @@ async function handleCellClick(r, c) {
 //  AI ROUTINE
 // ═══════════════════════════════════════════════
 function runAiRoutine() {
+    if (!isAiVsAiMode && currentTurn === humanColor) return;
     const moves = getLegalMoves(board, currentTurn);
     if (moves.length === 0) return;
 
     let stoneCount = 0;
     for (let r=0;r<8;r++) for (let c=0;c<8;c++) if (board[r][c]!==EMPTY) stoneCount++;
 
-    const thinkingTime = isAiVsAiMode ? 1 : (stoneCount < 16 ? 200 : stoneCount < 44 ? 400 : 200);
+    const thinkingTime = isAiVsAiMode ? 1 : (stoneCount < 16 ? 120 : 1);
 
     const bookMove = queryOpeningBook(gameHistory);
     if (bookMove && stoneCount < 20) {
@@ -1142,6 +1328,7 @@ function applyAiMove(move, stoneCount) {
     currentTurn = currentTurn === WHITE ? BLACK : WHITE;
     updateDisplay();
     if (isAiVsAiMode) runAiRoutine();
+    else if (currentTurn !== humanColor) runAiRoutine();
 }
 
 // ═══════════════════════════════════════════════
@@ -1624,6 +1811,7 @@ async function initGame() {
     currentLogIndex = -1;
     bookHitsThisGame = 0;
     lastPVLine = [];
+    stopTurnTimer();
     if (typingIntervalId) { clearInterval(typingIntervalId); typingIntervalId = null; }
 
     currentZobristHash = computeFullZobrist(board);
@@ -1631,26 +1819,47 @@ async function initGame() {
     clearHeuristicsTables();
 
     if (isAiVsAiMode) {
+        humanColor = BLACK; // AI同士では意味なし
         document.getElementById('main-title').textContent = "SUNNYBOT AUTO EVOLUTION v3.5";
         document.getElementById('label-black').textContent = "SUNNY_ALPHA";
         document.getElementById('label-white').textContent = "SUNNY_BETA";
         statusBlackEl.classList.add('ai-vs-ai'); statusWhiteEl.classList.add('ai-vs-ai');
-    } else {
-        document.getElementById('main-title').textContent = "SUNNYBOT GRANDMASTER CORE v3.5";
-        document.getElementById('label-black').textContent = "USER";
-        document.getElementById('label-white').textContent = "SUNNYBOT";
-        statusBlackEl.classList.remove('ai-vs-ai'); statusWhiteEl.classList.remove('ai-vs-ai');
-    }
 
-    buildBoardDOM();
-    pvContentEl.textContent = '-- awaiting analysis --';
-    pvContentEl.style.color = '#475569';
-    pushCodeLog('boot');
-    updateDisplay();
-
-    if (isAiVsAiMode) {
+        buildBoardDOM();
+        pvContentEl.textContent = '-- awaiting analysis --';
+        pvContentEl.style.color = '#475569';
+        pushCodeLog('boot');
+        updateDisplay();
         shieldEl.style.display = 'block';
         setTimeout(runAiRoutine, 1);
+    } else {
+        statusBlackEl.classList.remove('ai-vs-ai'); statusWhiteEl.classList.remove('ai-vs-ai');
+
+        buildBoardDOM();
+        pvContentEl.textContent = '-- awaiting analysis --';
+        pvContentEl.style.color = '#475569';
+        pushCodeLog('boot');
+
+        // コインフリップで先攻後攻決定
+        const humanFirst = await runCoinFlip();
+        humanColor = humanFirst ? BLACK : WHITE;
+
+        if (humanFirst) {
+            document.getElementById('main-title').textContent = "SUNNYBOT GRANDMASTER CORE v3.5";
+            document.getElementById('label-black').textContent = "YOU";
+            document.getElementById('label-white').textContent = "SUNNYBOT";
+        } else {
+            document.getElementById('main-title').textContent = "SUNNYBOT GRANDMASTER CORE v3.5";
+            document.getElementById('label-black').textContent = "SUNNYBOT";
+            document.getElementById('label-white').textContent = "YOU";
+        }
+
+        updateDisplay();
+
+        // AI先攻の場合は即座にAIを動かす
+        if (!humanFirst) {
+            runAiRoutine();
+        }
     }
 }
 
