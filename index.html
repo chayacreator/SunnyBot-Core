@@ -558,7 +558,50 @@
     </div>
 </div>
 
-<script>
+<script type="module">
+// ═══════════════════════════════════════════════
+//  FIREBASE INITIALIZATION (v10 Modular SDK)
+// ═══════════════════════════════════════════════
+import { initializeApp }                     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, get, update, onValue, increment }
+                                              from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey:            "AIzaSyCF2K-0e7u2W6Vb7H3M0KQVhcI5lRZ38lo",
+    authDomain:        "sunnybot-core.firebaseapp.com",
+    databaseURL:       "https://sunnybot-core-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "sunnybot-core",
+    storageBucket:     "sunnybot-core.firebasestorage.app",
+    messagingSenderId: "330998924408",
+    appId:             "1:330998924408:web:1a40c96f62e77074e8598d",
+    measurementId:     "G-B7XNNJFGY4"
+};
+
+const _fbApp = initializeApp(firebaseConfig);
+const _db    = getDatabase(_fbApp);
+const FB_PATH = "sunnybot/brain/v3";   // Realtime Database のルートパス
+
+// ─── Firebaseヘルパー：フラット化/復元 ────────────────────────
+function flattenMatrix(mat) {
+    const out = {};
+    for (let r = 0; r < 8; r++)
+        for (let c = 0; c < 8; c++)
+            out[`${r}_${c}`] = mat[r][c] || 0;
+    return out;
+}
+function restoreMatrix(flat) {
+    const mat = Array(8).fill(null).map(() => Array(8).fill(0));
+    if (!flat) return mat;
+    for (let r = 0; r < 8; r++)
+        for (let c = 0; c < 8; c++)
+            mat[r][c] = flat[`${r}_${c}`] || 0;
+    return mat;
+}
+function safeParseJSON(str, fallback) {
+    if (!str) return fallback;
+    try { return JSON.parse(str); } catch(e) { return fallback; }
+}
+
 // ═══════════════════════════════════════════════
 //  CONSTANTS & STATE
 // ═══════════════════════════════════════════════
@@ -652,30 +695,181 @@ const DEFAULT_BRAIN = () => ({
     autoBookStats: {}  
 });
 
+// ═══════════════════════════════════════════════
+//  FIREBASE ↔ BRAIN DATA HELPERS
+// ═══════════════════════════════════════════════
+function brainToFirebase(data) {
+    return {
+        totalGames:         data.totalGames  || 0,
+        wins:               data.wins        || 0,
+        losses:             data.losses      || 0,
+        learnedWeightBonus: flattenMatrix(data.learnedWeightBonus),
+        earlyGameBonus:     flattenMatrix(data.earlyGameBonus),
+        midGameBonus:       flattenMatrix(data.midGameBonus),
+        lateGameBonus:      flattenMatrix(data.lateGameBonus),
+        humanPattern:       JSON.stringify(data.humanPattern  || {}),
+        autoBook:           JSON.stringify(data.autoBook      || {}),
+        autoBookStats:      JSON.stringify(data.autoBookStats || {}),
+        lastUpdated:        Date.now()
+    };
+}
+function firebaseToBrain(snap) {
+    const d   = snap || {};
+    const def = DEFAULT_BRAIN();
+    return {
+        totalGames:         d.totalGames || 0,
+        wins:               d.wins       || 0,
+        losses:             d.losses     || 0,
+        learnedWeightBonus: restoreMatrix(d.learnedWeightBonus),
+        earlyGameBonus:     restoreMatrix(d.earlyGameBonus),
+        midGameBonus:       restoreMatrix(d.midGameBonus),
+        lateGameBonus:      restoreMatrix(d.lateGameBonus),
+        humanPattern:  safeParseJSON(d.humanPattern,  def.humanPattern),
+        autoBook:      safeParseJSON(d.autoBook,       {}),
+        autoBookStats: safeParseJSON(d.autoBookStats,  {})
+    };
+}
+// 行列の差分を加算してFirebaseへ書き込む
+// （ローカルで増えた分だけを remote に足す ⇒ 全ユーザー累積学習）
+function buildMatrixDelta(before, after) {
+    const delta = {};
+    for (let r = 0; r < 8; r++)
+        for (let c = 0; c < 8; c++) {
+            const diff = (after[r][c] || 0) - (before[r][c] || 0);
+            if (diff !== 0) delta[`${r}_${c}`] = diff;
+        }
+    return delta;
+}
+
+// ═══════════════════════════════════════════════
+//  SUNNYBOTCORE  — Firebase共有 + LocalStorageフォールバック
+// ═══════════════════════════════════════════════
 const SunnyBotCore = {
     storageKey: 'SunnyBot_v3_GrandmasterCore',
-    brainData: DEFAULT_BRAIN(),
+    brainData:  DEFAULT_BRAIN(),
+    _prevBrain: null,   // コミット前のスナップショット（差分計算用）
+
+    // ── FETCH: Firebase優先、失敗時はLocalStorage ──
     async fetchLatestDataAPI() {
+        // Firebase から取得
+        try {
+            const snap = await get(ref(_db, FB_PATH));
+            if (snap.exists()) {
+                const fbData = firebaseToBrain(snap.val());
+                this.brainData = fbData;
+                // ローカルにもキャッシュ
+                localStorage.setItem(this.storageKey, JSON.stringify(fbData));
+                document.getElementById('api-status').textContent = 'FB_SYNC_OK';
+                document.getElementById('api-status').style.color = 'var(--accent-green)';
+                this._prevBrain = JSON.parse(JSON.stringify(fbData));
+                return fbData;
+            }
+        } catch(e) {
+            console.warn('[SunnyBotCore] Firebase fetch failed, falling back to localStorage:', e);
+            document.getElementById('api-status').textContent = 'FB_OFFLINE';
+            document.getElementById('api-status').style.color = 'var(--accent-red)';
+        }
+        // LocalStorage フォールバック
         const saved = localStorage.getItem(this.storageKey);
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
-                if (!parsed.earlyGameBonus) parsed.earlyGameBonus = Array(8).fill(null).map(() => Array(8).fill(0));
-                if (!parsed.midGameBonus)   parsed.midGameBonus   = Array(8).fill(null).map(() => Array(8).fill(0));
-                if (!parsed.lateGameBonus)  parsed.lateGameBonus  = Array(8).fill(null).map(() => Array(8).fill(0));
-                if (!parsed.humanPattern)   parsed.humanPattern   = DEFAULT_BRAIN().humanPattern;
-                if (!parsed.autoBook)       parsed.autoBook       = {};
-                if (!parsed.autoBookStats)  parsed.autoBookStats  = {};
+                ['earlyGameBonus','midGameBonus','lateGameBonus'].forEach(k => {
+                    if (!parsed[k]) parsed[k] = Array(8).fill(null).map(() => Array(8).fill(0));
+                });
+                if (!parsed.humanPattern)  parsed.humanPattern  = DEFAULT_BRAIN().humanPattern;
+                if (!parsed.autoBook)      parsed.autoBook      = {};
+                if (!parsed.autoBookStats) parsed.autoBookStats = {};
                 this.brainData = parsed;
             } catch(e) { this.brainData = DEFAULT_BRAIN(); }
         }
+        this._prevBrain = JSON.parse(JSON.stringify(this.brainData));
         return this.brainData;
     },
+
+    // ── COMMIT: 差分をFirebaseにマージ書き込み + LocalStorageにも保存 ──
     async commitDataAPI(updatedData) {
         this.brainData = updatedData;
-        localStorage.setItem(this.storageKey, JSON.stringify(this.brainData));
+        localStorage.setItem(this.storageKey, JSON.stringify(updatedData));
+
+        const prev = this._prevBrain || DEFAULT_BRAIN();
+        const updates = {};
+
+        // スカラー値は直接上書き（totalGames等は全体の最大値を使用）
+        updates[`${FB_PATH}/totalGames`] = updatedData.totalGames;
+        updates[`${FB_PATH}/wins`]       = updatedData.wins;
+        updates[`${FB_PATH}/losses`]     = updatedData.losses;
+        updates[`${FB_PATH}/lastUpdated`]= Date.now();
+
+        // 行列は差分を加算（全ユーザーの学習を累積）
+        const matrixKeys = ['learnedWeightBonus','earlyGameBonus','midGameBonus','lateGameBonus'];
+        matrixKeys.forEach(key => {
+            const delta = buildMatrixDelta(prev[key], updatedData[key]);
+            Object.entries(delta).forEach(([cell, val]) => {
+                updates[`${FB_PATH}/${key}/${cell}`] = increment(val);
+            });
+        });
+
+        // autoBook / autoBookStats / humanPattern は JSON文字列で上書き
+        updates[`${FB_PATH}/humanPattern`]  = JSON.stringify(updatedData.humanPattern);
+        updates[`${FB_PATH}/autoBook`]      = JSON.stringify(updatedData.autoBook);
+        updates[`${FB_PATH}/autoBookStats`] = JSON.stringify(updatedData.autoBookStats);
+
+        try {
+            await update(ref(_db), updates);
+            document.getElementById('api-status').textContent = 'FB_COMMIT_OK';
+            document.getElementById('api-status').style.color = 'var(--accent-green)';
+        } catch(e) {
+            console.warn('[SunnyBotCore] Firebase commit failed (local save OK):', e);
+            document.getElementById('api-status').textContent = 'FB_SAVE_LOCAL';
+            document.getElementById('api-status').style.color = 'var(--accent-sunny)';
+        }
+
+        // 次の差分計算のためにスナップショット更新
+        this._prevBrain = JSON.parse(JSON.stringify(updatedData));
+    },
+
+    // ── REALTIME LISTENER: 他ユーザーの学習をリアルタイム反映 ──
+    startRealtimeSync(onUpdate) {
+        const brainRef = ref(_db, FB_PATH);
+        return onValue(brainRef, (snap) => {
+            if (!snap.exists()) return;
+            const remoteData = firebaseToBrain(snap.val());
+            // ローカルとリモートで大きい方を採用（学習の退行を防ぐ）
+            const merged = mergeWithMax(this.brainData, remoteData);
+            this.brainData = merged;
+            this._prevBrain = JSON.parse(JSON.stringify(merged));
+            localStorage.setItem(this.storageKey, JSON.stringify(merged));
+            if (onUpdate) onUpdate(merged);
+        }, { onlyOnce: false });
     }
 };
+
+// ── リアルタイム更新時のマージ: 各セルの最大値を採用 ──
+function mergeWithMax(local, remote) {
+    const merged = JSON.parse(JSON.stringify(local));
+    const matrixKeys = ['learnedWeightBonus','earlyGameBonus','midGameBonus','lateGameBonus'];
+    matrixKeys.forEach(key => {
+        for (let r = 0; r < 8; r++)
+            for (let c = 0; c < 8; c++) {
+                const lv = local[key]?.[r]?.[c]  || 0;
+                const rv = remote[key]?.[r]?.[c] || 0;
+                // 正の重みは大きい方、負は小さい方を採用（学習を保護）
+                merged[key][r][c] = Math.abs(lv) >= Math.abs(rv) ? lv : rv;
+            }
+    });
+    merged.totalGames = Math.max(local.totalGames || 0, remote.totalGames || 0);
+    merged.wins       = Math.max(local.wins       || 0, remote.wins       || 0);
+    merged.losses     = Math.max(local.losses     || 0, remote.losses     || 0);
+    // autoBook はリモートの方が大きければ採用
+    const remoteBookSize = Object.keys(remote.autoBook || {}).length;
+    const localBookSize  = Object.keys(local.autoBook  || {}).length;
+    if (remoteBookSize > localBookSize) {
+        merged.autoBook      = remote.autoBook;
+        merged.autoBookStats = remote.autoBookStats;
+    }
+    return merged;
+}
 
 // ═══════════════════════════════════════════════
 //  DOM REFS
@@ -1063,9 +1257,26 @@ function stopTurnTimer() {
 // ═══════════════════════════════════════════════
 //  SYNC
 // ═══════════════════════════════════════════════
+let _realtimeUnsubscribe = null;
+
 async function syncWithSunnyBotCore() {
     localSunnyBotData = await SunnyBotCore.fetchLatestDataAPI();
     brainGamesEl.textContent = localSunnyBotData.totalGames;
+
+    // リアルタイムリスナーを一度だけ登録
+    if (!_realtimeUnsubscribe) {
+        _realtimeUnsubscribe = SunnyBotCore.startRealtimeSync((merged) => {
+            // ゲーム中でない場合のみローカルデータを静かに更新
+            if (shieldEl.style.display !== 'block') {
+                localSunnyBotData = merged;
+                brainGamesEl.textContent = localSunnyBotData.totalGames;
+                if (heatmapMode) refreshBoardHeatmap();
+                if (currentMonitorTab === 'heatmap') renderSideHeatmap();
+                document.getElementById('api-status').textContent = 'FB_LIVE';
+                document.getElementById('api-status').style.color = 'var(--accent-neon)';
+            }
+        });
+    }
 }
 
 // ═══════════════════════════════════════════════
@@ -1872,6 +2083,17 @@ function toggleAutoEvolutionMode() {
 }
 
 initGame();
+
+// ═══════════════════════════════════════════════
+//  GLOBAL EXPOSURE (type="module" 対策)
+// ═══════════════════════════════════════════════
+window.resetGame              = resetGame;
+window.toggleAutoEvolutionMode = toggleAutoEvolutionMode;
+window.toggleHeatmap          = toggleHeatmap;
+window.switchMonitorTab       = switchMonitorTab;
+window.navigateHistory        = navigateHistory;
+window.handleCellClick        = handleCellClick;
+window.onload                 = initGame;
 </script>
 </body>
 </html>
