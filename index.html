@@ -498,7 +498,7 @@
                 <span>API: <span id="api-status" style="color:var(--accent-neon)">SYNC_ACTIVE</span></span>
                 <span id="book-indicator">📖 BOOK: --</span>
                 <span id="phase-indicator" class="early">EARLY</span>
-                <span>GEN: <span id="brain-games" style="color:var(--accent-purple)">0</span></span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;">GLOBAL: <span id="brain-games" style="color:var(--accent-purple);font-weight:700;font-size:0.8rem;letter-spacing:0.05em">--</span> <span style="color:#475569;font-size:0.6rem;">GAMES</span></span>
             </div>
             <div style="display:flex;justify-content:center;margin-top:4px;">
                 <div id="turn-timer-wrap">
@@ -795,11 +795,18 @@ const SunnyBotCore = {
         const prev = this._prevBrain || DEFAULT_BRAIN();
         const updates = {};
 
-        // スカラー値は直接上書き（totalGames等は全体の最大値を使用）
-        updates[`${FB_PATH}/totalGames`] = updatedData.totalGames;
-        updates[`${FB_PATH}/wins`]       = updatedData.wins;
-        updates[`${FB_PATH}/losses`]     = updatedData.losses;
-        updates[`${FB_PATH}/lastUpdated`]= Date.now();
+        // totalGames / wins / losses は increment() でアトミックに加算
+        // （上書きだと同時プレイ時にカウントが失われる）
+        const prevGames   = this._prevBrain ? (this._prevBrain.totalGames || 0) : 0;
+        const prevWins    = this._prevBrain ? (this._prevBrain.wins       || 0) : 0;
+        const prevLosses  = this._prevBrain ? (this._prevBrain.losses     || 0) : 0;
+        const deltaGames  = (updatedData.totalGames || 0) - prevGames;
+        const deltaWins   = (updatedData.wins       || 0) - prevWins;
+        const deltaLosses = (updatedData.losses     || 0) - prevLosses;
+        if (deltaGames  > 0) updates[`${FB_PATH}/totalGames`] = increment(deltaGames);
+        if (deltaWins   > 0) updates[`${FB_PATH}/wins`]       = increment(deltaWins);
+        if (deltaLosses > 0) updates[`${FB_PATH}/losses`]     = increment(deltaLosses);
+        updates[`${FB_PATH}/lastUpdated`] = Date.now();
 
         // 行列は差分を加算（全ユーザーの学習を累積）
         const matrixKeys = ['learnedWeightBonus','earlyGameBonus','midGameBonus','lateGameBonus'];
@@ -1257,19 +1264,34 @@ function stopTurnTimer() {
 // ═══════════════════════════════════════════════
 //  SYNC
 // ═══════════════════════════════════════════════
-let _realtimeUnsubscribe = null;
+let _realtimeUnsubscribe    = null;
+let _totalGamesUnsubscribe  = null;
+
+// totalGames だけを Firebase から直接リアルタイム監視
+function startGlobalGamesCounter() {
+    if (_totalGamesUnsubscribe) return;
+    const totalGamesRef = ref(_db, `${FB_PATH}/totalGames`);
+    _totalGamesUnsubscribe = onValue(totalGamesRef, (snap) => {
+        const val = snap.exists() ? snap.val() : 0;
+        brainGamesEl.textContent = Number(val).toLocaleString();
+    }, (err) => {
+        // Firebase 接続不可の場合はローカル値を維持
+        console.warn('[GlobalCounter] Firebase read error:', err);
+    });
+}
 
 async function syncWithSunnyBotCore() {
     localSunnyBotData = await SunnyBotCore.fetchLatestDataAPI();
-    brainGamesEl.textContent = localSunnyBotData.totalGames;
+    brainGamesEl.textContent = Number(localSunnyBotData.totalGames).toLocaleString();
 
-    // リアルタイムリスナーを一度だけ登録
+    // totalGames 専用リアルタイムカウンターを起動（軽量・常時接続）
+    startGlobalGamesCounter();
+
+    // 脳データ全体のリアルタイムリスナーを一度だけ登録
     if (!_realtimeUnsubscribe) {
         _realtimeUnsubscribe = SunnyBotCore.startRealtimeSync((merged) => {
-            // ゲーム中でない場合のみローカルデータを静かに更新
             if (shieldEl.style.display !== 'block') {
                 localSunnyBotData = merged;
-                brainGamesEl.textContent = localSunnyBotData.totalGames;
                 if (heatmapMode) refreshBoardHeatmap();
                 if (currentMonitorTab === 'heatmap') renderSideHeatmap();
                 document.getElementById('api-status').textContent = 'FB_LIVE';
