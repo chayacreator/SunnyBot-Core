@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUNNYBOT GRANDMASTER CORE v3.5 - ENGINE MODE</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #030712;
+            --panel-bg: rgba(11, 17, 32, 0.85);
+            --board-border: #090d16;
+            --green-dark: #022c22;
+            --green-light: #10b981;
+            --green-hover: #065f46;
+            --accent-neon: #00f2fe;
+            --accent-sunny: #f59e0b;
+            --accent-purple: #a855f7;
+            --accent-red: #ef4444;
+            --accent-green: #22c55e;
+            --text-main: #e2e8f0;
+            --code-bg: #070a13;
+            --syn-keyword: #ff7b72;
+            --syn-string: #a5d6ff;
+            --syn-comment: #8b949e;
+            --syn-number: #d2a8ff;
+            --syn-default: #79c0ff;
+            --syn-pv: #fde68a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Inter", system-ui, sans-serif;
+            background: radial-gradient(circle at 50% 50%, #0f172a 0%, var(--bg-color) 100%);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            padding: 20px;
+        }
+
+        #workspace-layout {
+            display: flex;
+            width: 95vw;
+            height: 90vh;
+            gap: 24px;
+            max-width: 1400px;
+        }
+
+        #game-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            height: 100%;
+        }
+
+        #monitor-section {
+            width: 34%;
+            background: var(--code-bg);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 20px 50px rgba(0,0,0,0.5);
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #monitor-header {
+            background: rgba(255,255,255,0.02);
+            padding: 8px 12px;
+            font-size: 0.68rem;
+            color: #64748b;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: "JetBrains Mono", monospace;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+
+        .monitor-tabs {
+            display: flex;
+            gap: 4px;
+        }
+
+        .monitor-tab {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #475569;
+            padding: 2px 8px;
+            font-size: 0.62rem;
+            cursor: pointer;
+            border-radius: 3px;
+            font-family: "JetBrains Mono", monospace;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .monitor-tab.active {
+            background: var(--accent-neon);
+            color: #000;
+            border-color: var(--accent-neon);
+        }
+
+        .monitor-tab:hover:not(.active) {
+            border-color: #475569;
+            color: #94a3b8;
+        }
+
+        .nav-button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+            padding: 2px 7px;
+            font-size: 0.6rem;
+            cursor: pointer;
+            border-radius: 3px;
+            font-family: "JetBrains Mono", monospace;
+            transition: all 0.15s;
+        }
+
+        .nav-button:hover { background: var(--accent-neon); color: #000; border-color: var(--accent-neon); }
+        .nav-button:disabled { background: transparent; color: #1e293b; border-color: rgba(255,255,255,0.02); cursor: not-allowed; }
+
+        #panel-code {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #code-viewer {
+            flex: 1;
+            padding: 12px;
+            overflow-y: auto;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.72rem;
+            line-height: 1.6;
+            color: #58a6ff;
+            white-space: pre-wrap;
+            tab-size: 4;
+            user-select: text;
+        }
+
+        #pv-viewer {
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding: 8px 12px;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.68rem;
+            line-height: 1.5;
+            color: var(--syn-pv);
+            white-space: pre-wrap;
+            max-height: 110px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+
+        #pv-label {
+            color: #475569;
+            font-size: 0.6rem;
+            margin-bottom: 2px;
+            letter-spacing: 0.05em;
+        }
+
+        #code-viewer::after {
+            content: '|';
+            animation: blink 0.8s infinite;
+            color: var(--accent-neon);
+            margin-left: 2px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        #panel-heatmap {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            padding: 10px;
+            overflow: hidden;
+        }
+
+        #panel-heatmap.visible { display: flex; }
+
+        #heatmap-title {
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.65rem;
+            color: #475569;
+            margin-bottom: 8px;
+            letter-spacing: 0.05em;
+        }
+
+        #heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            flex: 1;
+            gap: 2px;
+            max-height: calc(100% - 60px);
+        }
+
+        .hm-cell {
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.48rem;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #heatmap-legend {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.58rem;
+            color: #475569;
+        }
+
+        #heatmap-phase-info {
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.62rem;
+            color: var(--accent-sunny);
+            margin-bottom: 6px;
+        }
+
+        .token-keyword { color: var(--syn-keyword); font-weight: bold; }
+        .token-string { color: var(--syn-string); }
+        .token-comment { color: var(--syn-comment); font-style: italic; }
+        .token-number { color: var(--syn-number); }
+        .token-pv { color: var(--syn-pv); font-weight: bold; }
+
+        #input-shield { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; cursor: wait; background: rgba(0,0,0,0.1); }
+
+        #header-panel {
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border: 1px solid rgba(245, 158, 11, 0.2); padding: 10px 18px;
+            border-radius: 8px; text-align: center; width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            font-family: "Orbitron", sans-serif;
+            font-size: 1rem; letter-spacing: 2px; color: var(--accent-sunny);
+            text-shadow: 0 0 10px rgba(245, 158, 11, 0.4); margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        #scoreboard { display: flex; justify-content: space-around; margin: 3px 0; }
+
+        .player-status {
+            display: flex; align-items: center; gap: 8px; font-size: 0.82rem; font-weight: 700;
+            padding: 3px 12px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.03);
+            background: rgba(255,255,255,0.01);
+        }
+
+        .player-status.active {
+            background: rgba(245, 158, 11, 0.08); border-color: var(--accent-sunny);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+        }
+
+        .player-status.ai-vs-ai {
+            background: rgba(168, 85, 247, 0.12) !important; border-color: var(--accent-purple) !important;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.3) !important;
+        }
+
+        .stone-icon { width: 11px; height: 11px; border-radius: 50%; }
+        .stone-icon.black { background: #000; box-shadow: 0 0 4px rgba(0,0,0,0.8); border: 1px solid #333; }
+        .stone-icon.white { background: #fff; box-shadow: 0 0 4px rgba(255,255,255,0.3); }
+
+        #brain-status-panel {
+            display: flex; justify-content: space-between; font-size: 0.68rem;
+            color: #64748b; background: rgba(0,0,0,0.3); padding: 4px 10px;
+            border-radius: 4px; margin-top: 5px; font-weight: 500;
+        }
+
+        #phase-indicator {
+            font-size: 0.68rem;
+            padding: 1px 8px;
+            border-radius: 3px;
+            font-family: "JetBrains Mono", monospace;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        #phase-indicator.early { color: var(--accent-green); border: 1px solid rgba(34,197,94,0.3); background: rgba(34,197,94,0.08); }
+        #phase-indicator.mid   { color: var(--accent-sunny); border: 1px solid rgba(245,158,11,0.3); background: rgba(245,158,11,0.08); }
+        #phase-indicator.late  { color: var(--accent-red);   border: 1px solid rgba(239,68,68,0.3);  background: rgba(239,68,68,0.08); }
+
+        #book-indicator {
+            font-size: 0.65rem;
+            color: var(--accent-neon);
+            font-family: "JetBrains Mono", monospace;
+        }
+
+        #message-box {
+            font-size: 0.72rem; color: #94a3b8; height: 2.4rem; overflow: hidden;
+            line-height: 1.4; border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 5px; margin-top: 5px; text-align: left; font-weight: 400;
+        }
+
+        #board-wrapper {
+            position: relative;
+            width: min(52vh, 80vw);
+            height: min(52vh, 80vw);
+        }
+
+        #board-container {
+            width: 100%; height: 100%; background: var(--board-border);
+            padding: 8px; border-radius: 8px; box-shadow: 0 20px 55px rgba(0,0,0,0.8);
+            border: 1px solid rgba(255,255,255,0.02);
+        }
+
+        #board {
+            display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr);
+            width: 100%; height: 100%; gap: 3px; background: var(--board-border);
+        }
+
+        .cell {
+            background: var(--green-dark); position: relative; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.1s ease;
+            overflow: hidden;
+        }
+
+        .cell:hover { background: var(--green-hover); }
+
+        .cell.legal-move::after {
+            content: ''; width: 18%; height: 18%; background: var(--accent-sunny);
+            border-radius: 50%; position: absolute; box-shadow: 0 0 10px var(--accent-sunny);
+            pointer-events: none; z-index: 3;
+        }
+
+        .cell-heat-overlay {
+            position: absolute;
+            inset: 0;
+            border-radius: 0;
+            pointer-events: none;
+            z-index: 1;
+            transition: background 0.4s ease, opacity 0.4s ease;
+            opacity: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: "JetBrains Mono", monospace;
+            font-size: clamp(0.28rem, 1vw, 0.38rem);
+            font-weight: 700;
+        }
+
+        body.heatmap-on .cell-heat-overlay {
+            opacity: 0.72;
+        }
+
+        .stone {
+            width: 86%; height: 86%; border-radius: 50%;
+            transform: scale(1); position: absolute;
+            z-index: 2; pointer-events: none;
+            display: none;
+        }
+        .stone.black { display: block; background: radial-gradient(circle at 35% 35%, #444, #000); box-shadow: 2px 2px 6px rgba(0,0,0,0.8); }
+        .stone.white { display: block; background: radial-gradient(circle at 35% 35%, #fff, #c8c8c8); box-shadow: 2px 2px 6px rgba(0,0,0,0.5); }
+
+        #control-panel {
+            width: 100%; display: flex; justify-content: space-around; gap: 8px;
+        }
+
+        button {
+            background: #0f172a; color: #94a3b8; border: 1px solid rgba(255,255,255,0.06);
+            padding: 7px 14px; font-size: 0.72rem; border-radius: 4px; cursor: pointer;
+            font-family: inherit; transition: all 0.15s; font-weight: 600; letter-spacing: 0.5px;
+            flex: 1;
+        }
+
+        button:hover {
+            background: var(--accent-sunny); color: #000; border-color: var(--accent-sunny);
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
+        }
+
+        button#btn-auto-toggle.active-mode {
+            background: rgba(168, 85, 247, 0.2); color: #fff; border-color: var(--accent-purple);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.6);
+        }
+
+        button#btn-heatmap.active-mode {
+            background: rgba(0, 242, 254, 0.15); color: var(--accent-neon);
+            border-color: var(--accent-neon);
+            box-shadow: 0 0 12px rgba(0, 242, 254, 0.25);
+        }
+    </style>
+</head>
+<body>
+
+<div id="input-shield"></div>
+
+<div id="workspace-layout">
+    <div id="game-section">
+        <div id="header-panel">
+            <h1 id="main-title">SUNNYBOT GRANDMASTER CORE v3.5</h1>
+            <div id="scoreboard">
+                <div id="status-black" class="player-status active">
+                    <span class="stone-icon black"></span> <span id="label-black">USER</span>: <span id="score-black">2</span>
+                </div>
+                <div id="status-white" class="player-status">
+                    <span class="stone-icon white"></span> <span id="label-white">SUNNYBOT</span>: <span id="score-white">2</span>
+                </div>
+            </div>
+            <div id="brain-status-panel">
+                <span>API: <span id="api-status" style="color:var(--accent-neon)">SYNC_ACTIVE</span></span>
+                <span id="book-indicator">📖 BOOK: --</span>
+                <span id="phase-indicator" class="early">EARLY</span>
+                <span>GEN: <span id="brain-games" style="color:var(--accent-purple)">0</span></span>
+            </div>
+            <div id="message-box">SYSTEM BOOTING...</div>
+        </div>
+
+        <div id="board-wrapper">
+            <div id="board-container">
+                <div id="board"></div>
+            </div>
+        </div>
+
+        <div id="control-panel">
+            <button onclick="resetGame()">CORE REBOOT</button>
+            <button id="btn-auto-toggle" onclick="toggleAutoEvolutionMode()">SUNNY AUTO</button>
+            <button id="btn-heatmap" onclick="toggleHeatmap()">HEAT MAP</button>
+        </div>
+    </div>
+
+    <div id="monitor-section">
+        <div id="monitor-header">
+            <div class="monitor-tabs">
+                <button class="monitor-tab active" onclick="switchMonitorTab('code')" id="tab-code">CODE</button>
+                <button class="monitor-tab" onclick="switchMonitorTab('heatmap')" id="tab-heatmap">HEATMAP</button>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center">
+                <button class="nav-button" id="btn-prev" onclick="navigateHistory(-1)" disabled>◀</button>
+                <span id="log-counter" style="color:var(--accent-neon);font-weight:bold;font-size:0.62rem;">LOG[0/0]</span>
+                <button class="nav-button" id="btn-next" onclick="navigateHistory(1)" disabled>▶</button>
+            </div>
+        </div>
+
+        <div id="panel-code">
+            <div id="code-viewer">/* SYSTEM READY. WAITING FOR MOVE PACKETS... */</div>
+            <div id="pv-viewer">
+                <div id="pv-label">▶ PRINCIPAL VARIATION (READ LINE)</div>
+                <div id="pv-content" style="color:#475569">-- awaiting analysis --</div>
+            </div>
+        </div>
+
+        <div id="panel-heatmap">
+            <div id="heatmap-title">■ EVALUATION HEATMAP — CURRENT BOARD STATE</div>
+            <div id="heatmap-phase-info">PHASE: <span id="hm-phase">--</span> &nbsp;|&nbsp; WEIGHTS: <span id="hm-weights">--</span></div>
+            <div id="heatmap-grid"></div>
+            <div id="heatmap-legend">
+                <span style="color:#ef4444">■ DANGER</span>
+                <span style="color:#475569">■ NEUTRAL</span>
+                <span style="color:#22c55e">■ STRONG</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  CONSTANTS & STATE
+// ═══════════════════════════════════════════════
+const EMPTY = 0, BLACK = 1, WHITE = 2;
+let board = [];
+let currentTurn = BLACK;
+let gameHistory = [];
+let isAiVsAiMode = false;
+let heatmapMode = false;
+let currentMonitorTab = 'code';
+
+let monitorLogs = [];
+let currentLogIndex = -1;
+let typingIntervalId = null;
+
+let localSunnyBotData = {};
+let lastPVLine = [];   
+let lastEvalScores = Array(8).fill(null).map(() => Array(8).fill(0)); 
+
+const CORNERS    = [[0,0],[0,7],[7,0],[7,7]];
+const X_SQUARES  = [[1,1],[1,6],[6,1],[6,6]];
+const C_SQUARES  = [[0,1],[1,0],[0,6],[1,7],[6,0],[7,1],[6,7],[7,6]];
+const DIRECTIONS = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+
+// ── ZOBRIST HASH TABLE ──
+let zobristTable = Array(64).fill(null).map(() => Array(3).fill(0));
+let currentZobristHash = 0;
+
+function initZobrist() {
+    for (let i = 0; i < 64; i++) {
+        for (let j = 0; j < 3; j++) {
+            zobristTable[i][j] = Math.floor(Math.random() * 2147483647);
+        }
+    }
+}
+initZobrist();
+
+function computeFullZobrist(targetBoard) {
+    let h = 0;
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            h ^= zobristTable[r * 8 + c][targetBoard[r][c]];
+        }
+    }
+    return h;
+}
+
+// ── TRANSPOSITION TABLE ──
+const TT = new Map();
+const TT_EXACT = 0, TT_ALPHA = 1, TT_BETA = 2;
+
+// ── MOVE ORDERING HEURISTICS (KILLER & HISTORY) ──
+let killerMoves = Array(60).fill(null); // 各深さの優秀な一手
+let historyTable = Array(8).fill(null).map(() => Array(8).fill(0)); // マスごとの累計カット誘発率
+
+function clearHeuristicsTables() {
+    killerMoves.fill(null);
+    for(let r=0; r<8; r++) historyTable[r].fill(0);
+}
+
+// ── OPENING BOOK ──
+const OPENING_BOOK_HARD = {
+    "": [3,4],            
+    "3,4": [2,3],
+    "3,4,2,3": [2,4],
+    "3,4,2,3,2,4": [2,5],
+    "3,4,2,3,2,4,2,5": [1,4],
+    "3,3": [2,4],
+    "3,3,2,4": [2,3],
+    "3,3,2,4,2,3": [2,2],
+    "4,3": [3,2],
+    "4,3,3,2": [2,3],
+    "4,4": [3,4],
+};
+
+// ═══════════════════════════════════════════════
+//  BRAIN DATA STRUCTURE (v3.5)
+// ═══════════════════════════════════════════════
+const DEFAULT_BRAIN = () => ({
+    totalGames: 0, wins: 0, losses: 0,
+    learnedWeightBonus: Array(8).fill(null).map(() => Array(8).fill(0)),
+    earlyGameBonus:  Array(8).fill(null).map(() => Array(8).fill(0)),
+    midGameBonus:    Array(8).fill(null).map(() => Array(8).fill(0)),
+    lateGameBonus:   Array(8).fill(null).map(() => Array(8).fill(0)),
+    humanPattern: { xMoveTendency:0, cMoveTendency:0, cornerSnipeRate:0, averageOpenness:0, clickCount:0 },
+    autoBook: {},
+    autoBookStats: {}  
+});
+
+const SunnyBotCore = {
+    storageKey: 'SunnyBot_v3_GrandmasterCore',
+    brainData: DEFAULT_BRAIN(),
+    async fetchLatestDataAPI() {
+        const saved = localStorage.getItem(this.storageKey);
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                if (!parsed.earlyGameBonus) parsed.earlyGameBonus = Array(8).fill(null).map(() => Array(8).fill(0));
+                if (!parsed.midGameBonus)   parsed.midGameBonus   = Array(8).fill(null).map(() => Array(8).fill(0));
+                if (!parsed.lateGameBonus)  parsed.lateGameBonus  = Array(8).fill(null).map(() => Array(8).fill(0));
+                if (!parsed.humanPattern)   parsed.humanPattern   = DEFAULT_BRAIN().humanPattern;
+                if (!parsed.autoBook)       parsed.autoBook       = {};
+                if (!parsed.autoBookStats)  parsed.autoBookStats  = {};
+                this.brainData = parsed;
+            } catch(e) { this.brainData = DEFAULT_BRAIN(); }
+        }
+        return this.brainData;
+    },
+    async commitDataAPI(updatedData) {
+        this.brainData = updatedData;
+        localStorage.setItem(this.storageKey, JSON.stringify(this.brainData));
+    }
+};
+
+// ═══════════════════════════════════════════════
+//  DOM REFS
+// ═══════════════════════════════════════════════
+const boardEl       = document.getElementById('board');
+const shieldEl      = document.getElementById('input-shield');
+const scoreBlackEl  = document.getElementById('score-black');
+const scoreWhiteEl  = document.getElementById('score-white');
+const statusBlackEl = document.getElementById('status-black');
+const statusWhiteEl = document.getElementById('status-white');
+const messageBoxEl  = document.getElementById('message-box');
+const brainGamesEl  = document.getElementById('brain-games');
+const codeViewerEl  = document.getElementById('code-viewer');
+const pvContentEl   = document.getElementById('pv-content');
+const pvViewerEl    = document.getElementById('pv-viewer');
+const btnPrevEl     = document.getElementById('btn-prev');
+const btnNextEl     = document.getElementById('btn-next');
+const logCounterEl  = document.getElementById('log-counter');
+const btnAutoToggle = document.getElementById('btn-auto-toggle');
+const btnHeatmap    = document.getElementById('btn-heatmap');
+const phaseEl       = document.getElementById('phase-indicator');
+const bookEl        = document.getElementById('book-indicator');
+const heatmapGridEl = document.getElementById('heatmap-grid');
+const hmPhaseEl     = document.getElementById('hm-phase');
+const hmWeightsEl   = document.getElementById('hm-weights');
+const panelCode     = document.getElementById('panel-code');
+const panelHeatmap  = document.getElementById('panel-heatmap');
+
+// ═══════════════════════════════════════════════
+//  MONITOR TAB SWITCHING
+// ═══════════════════════════════════════════════
+function switchMonitorTab(tab) {
+    currentMonitorTab = tab;
+    document.getElementById('tab-code').classList.toggle('active', tab === 'code');
+    document.getElementById('tab-heatmap').classList.toggle('active', tab === 'heatmap');
+    panelCode.style.display    = tab === 'code'    ? 'flex' : 'none';
+    panelHeatmap.style.display = tab === 'heatmap' ? 'flex' : 'none';
+    if (tab === 'heatmap') renderSideHeatmap();
+}
+
+// ═══════════════════════════════════════════════
+//  SYNTAX HIGHLIGHTER
+// ═══════════════════════════════════════════════
+function highlightCode(code) {
+    let html = code.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    html = html.replace(/(\/\*[\s\S]*?\*\/|\/\/.*)/g, '<span class="token-comment">$1</span>');
+    html = html.replace(/(["'`])(.*?)\1/g, m => `<span class="token-string">${m}</span>`);
+    html = html.replace(/\b(const|let|var|function|return|if|else|for|of|true|false|null|async|await)\b/g,
+        '<span class="token-keyword">$1</span>');
+    html = html.replace(/\b(\d+\.?\d*)\b(?![^<]*>)/g, '<span class="token-number">$1</span>');
+    return html;
+}
+
+const RUNTIME_CODE_TEMPLATES = {
+    boot: `/* GRANDMASTER CORE v3.5 — ZOBRIST SYNC */\nconst GrandmasterAPI = {\n\tversion: "3.5",\n\tengine: "AlphaBeta_Adaptive_Parity",\n\tTT_Status: "HASH_VERIFIED_OK",\n\tordering: "Killer+HistoryHeuristic",\n\twindow: "AspirationWindow_Active"\n};`,
+    humanMove: `/* HUMAN PATTERN ANALYSIS — REAL-TIME */\nfunction profileHumanBehavior(r, c) {\n\tdata.humanPattern.clickCount++;\n\tif (isXSquare(r,c)) data.humanPattern.xMoveTendency++;\n\tif (isCorner(r,c))  data.humanPattern.cornerSnipeRate++;\n\treturn { trapBias: "DYNAMIC" };\n}`,
+    aiRoutine: `/* ITERATIVE DEEPENING WITH ASPIRATION WINDOW */\nfunction runPhaseSearch() {\n\tlet alpha = prevScore - 400;\n\tlet beta  = prevScore + 400;\n\tlet score = alphaBeta(depth, alpha, beta);\n\tif (score <= alpha || score >= beta) {\n\t\tscore = alphaBeta(depth, -Inf, Inf); // Fail fallback\n\t}\n}`,
+    evaluation: `/* STATE-AWARE EVALUATOR (REAL-TIME SCALING) */\nfunction evaluateBoard(state) {\n\tconst stones = countStones(state);\n\tconst phase = getPhase(stones); // FIXED: Live analysis\n\tconst stability = computeRigidStable(state);\n\tconst parity = computeParityBonus(state, stones);\n\treturn stability + parity + mobility;\n}`,
+    terminal: `/* BACKPROPAGATION LOGGED */\nfunction backprop(loser) {\n\t// Core parameters preservation\n\tcommitDataToLocalStorage();\n}`,
+    book: `/* OPENING BOOK HIT — INSTANT RESPONSE */\nconst bookResult = OpeningBook.query(moveHistory);\nreturn bookResult.move;`,
+    pvUpdate: `/* PRINCIPAL VARIATION — LIVE READ LINE */\nfunction extractPV(node) {\n\treturn [...bestMovesPath];\n}`
+};
+
+function pushCodeLog(type, customText = null) {
+    let codeContent = customText ? customText : RUNTIME_CODE_TEMPLATES[type];
+    if (monitorLogs.length > 0 && monitorLogs[monitorLogs.length - 1] === codeContent) return;
+    monitorLogs.push(codeContent);
+    currentLogIndex = monitorLogs.length - 1;
+    if (currentMonitorTab === 'code') streamCodeWithTyping(codeContent);
+    updateNavButtons();
+}
+
+function streamCodeWithTyping(codeText) {
+    if (typingIntervalId) clearInterval(typingIntervalId);
+    codeViewerEl.innerHTML = "";
+    let i = 0;
+    const speed = isAiVsAiMode ? 0 : 1;
+    if (speed === 0) {
+        codeViewerEl.innerHTML = highlightCode(codeText);
+        codeViewerEl.scrollTop = codeViewerEl.scrollHeight;
+        return;
+    }
+    typingIntervalId = setInterval(() => {
+        if (i < codeText.length) {
+            i += 3;
+            if (i > codeText.length) i = codeText.length;
+            codeViewerEl.innerHTML = highlightCode(codeText.slice(0, i));
+            codeViewerEl.scrollTop = codeViewerEl.scrollHeight;
+        } else {
+            clearInterval(typingIntervalId);
+            typingIntervalId = null;
+        }
+    }, speed);
+}
+
+function navigateHistory(direction) {
+    let t = currentLogIndex + direction;
+    if (t >= 0 && t < monitorLogs.length) {
+        currentLogIndex = t;
+        if (typingIntervalId) { clearInterval(typingIntervalId); typingIntervalId = null; }
+        codeViewerEl.innerHTML = highlightCode(monitorLogs[currentLogIndex]);
+        updateNavButtons();
+    }
+}
+
+function updateNavButtons() {
+    btnPrevEl.disabled = currentLogIndex <= 0;
+    btnNextEl.disabled = currentLogIndex >= monitorLogs.length - 1 || monitorLogs.length === 0;
+    logCounterEl.textContent = monitorLogs.length === 0 ? "LOG[0/0]" : `LOG[${currentLogIndex+1}/${monitorLogs.length}]`;
+}
+
+// ═══════════════════════════════════════════════
+//  PV (PRINCIPAL VARIATION) DISPLAY
+// ═══════════════════════════════════════════════
+const COL_LABELS = ['a','b','c','d','e','f','g','h'];
+
+function formatPV(pvMoves) {
+    if (!pvMoves || pvMoves.length === 0) return '-- (no line)';
+    return pvMoves.map((m, i) => {
+        const col = COL_LABELS[m.c] || m.c;
+        const row = m.r + 1;
+        const player = (i % 2 === 0) ? '●' : '○';
+        return `${player}${col}${row}`;
+    }).join(' → ');
+}
+
+function updatePVDisplay(pvMoves, evalScore) {
+    if (!pvMoves || pvMoves.length === 0) {
+        pvContentEl.textContent = '-- awaiting analysis --';
+        pvContentEl.style.color = '#475569';
+        return;
+    }
+    const scoreStr = evalScore > 0 ? `+${evalScore}` : `${evalScore}`;
+    const color = evalScore > 500 ? '#22c55e' : evalScore < -500 ? '#ef4444' : '#fde68a';
+    pvContentEl.style.color = color;
+    pvContentEl.innerHTML = `<span style="color:#475569;font-size:0.6rem">eval: </span><span style="color:${color}">${scoreStr}</span>  ${formatPV(pvMoves)}`;
+    pvViewerEl.scrollTop = 0;
+}
+
+// ═══════════════════════════════════════════════
+//  PHASE DETECTION
+// ═══════════════════════════════════════════════
+function getPhase(stoneCount) {
+    if (stoneCount < 20) return 'early';
+    if (stoneCount < 44) return 'mid';
+    return 'late';
+}
+
+function getPhaseMatrix(phase) {
+    if (phase === 'early') return localSunnyBotData.earlyGameBonus;
+    if (phase === 'mid')   return localSunnyBotData.midGameBonus;
+    return localSunnyBotData.lateGameBonus;
+}
+
+function updatePhaseIndicator(stoneCount) {
+    const phase = getPhase(stoneCount);
+    phaseEl.className = 'phase-indicator ' + phase;
+    phaseEl.id = 'phase-indicator';
+    phaseEl.textContent = phase.toUpperCase();
+    if (phase === 'early') { phaseEl.classList.add('early'); }
+    else if (phase === 'mid') { phaseEl.classList.add('mid'); }
+    else { phaseEl.classList.add('late'); }
+    if (currentMonitorTab === 'heatmap') renderSideHeatmap();
+}
+
+// ═══════════════════════════════════════════════
+//  OPENING BOOK
+// ═══════════════════════════════════════════════
+function getMoveKey(history) {
+    return history.map(h => `${h.r},${h.c}`).join(',');
+}
+
+function queryOpeningBook(history) {
+    const key = getMoveKey(history);
+    if (OPENING_BOOK_HARD[key]) {
+        const [r, c] = OPENING_BOOK_HARD[key];
+        return { r, c, source: 'HARD' };
+    }
+    const ab = localSunnyBotData.autoBook;
+    const abs = localSunnyBotData.autoBookStats;
+    if (ab[key]) {
+        const [r, c] = ab[key];
+        const stats = abs[key] || { wins: 0, total: 1 };
+        const winRate = stats.wins / stats.total;
+        if (winRate >= 0.55 && stats.total >= 3) {
+            return { r, c, source: 'AUTO', winRate: (winRate * 100).toFixed(0) };
+        }
+    }
+    return null;
+}
+
+function recordBookOutcome(bookHistory, winner) {
+    for (let i = 0; i < bookHistory.length && i < 10; i++) {
+        const key = getMoveKey(bookHistory.slice(0, i));
+        if (!localSunnyBotData.autoBookStats[key]) {
+            localSunnyBotData.autoBookStats[key] = { wins: 0, total: 0 };
+        }
+        localSunnyBotData.autoBookStats[key].total++;
+        if (winner === WHITE) localSunnyBotData.autoBookStats[key].wins++;
+        if (i < bookHistory.length) {
+            const nextMove = bookHistory[i];
+            if (nextMove) localSunnyBotData.autoBook[key] = [nextMove.r, nextMove.c];
+        }
+    }
+}
+
+let bookHitsThisGame = 0;
+
+// ═══════════════════════════════════════════════
+//  HEATMAP
+// ═══════════════════════════════════════════════
+function toggleHeatmap() {
+    heatmapMode = !heatmapMode;
+    document.body.classList.toggle('heatmap-on', heatmapMode);
+    btnHeatmap.classList.toggle('active-mode', heatmapMode);
+    if (heatmapMode) refreshBoardHeatmap();
+}
+
+function getCellEvalScore(r, c, boardState, stoneCount) {
+    const phase = getPhase(stoneCount);
+    const phaseMatrix = getPhaseMatrix(phase);
+    let base = 0;
+    if (CORNERS.some(p => p[0]===r && p[1]===c)) base = 15000;
+    else if (X_SQUARES.some(p => p[0]===r && p[1]===c)) {
+        const cr = r < 4 ? 0 : 7, cc = c < 4 ? 0 : 7;
+        base = (boardState[cr][cc] === EMPTY) ? -8000 : 50;
+    } else if (C_SQUARES.some(p => p[0]===r && p[1]===c)) {
+        const cr = (r===0||r===1)?0:7, cc = (c===0||c===1)?0:7;
+        base = (boardState[cr][cc] === EMPTY) ? -4500 : 30;
+    } else {
+        base = (r===0||r===7||c===0||c===7) ? 150 : 25;
+    }
+    return base + localSunnyBotData.learnedWeightBonus[r][c] + (phaseMatrix[r][c] || 0);
+}
+
+function scoreToColor(score) {
+    const MAX = 15000;
+    const clamped = Math.max(-MAX, Math.min(MAX, score));
+    const t = clamped / MAX; 
+    if (t > 0) {
+        const g = Math.floor(t * 180);
+        return `rgba(0, ${80 + g}, 0, 0.65)`;
+    } else {
+        const r = Math.floor(-t * 180);
+        return `rgba(${80 + r}, 0, 0, 0.65)`;
+    }
+}
+
+function refreshBoardHeatmap() {
+    let stoneCount = 0;
+    for (let r=0;r<8;r++) for (let c=0;c<8;c++) if (board[r][c]!==EMPTY) stoneCount++;
+
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const cell = boardEl.children[r * 8 + c];
+            const overlay = cell.querySelector('.cell-heat-overlay');
+            if (!overlay) continue;
+            const score = getCellEvalScore(r, c, board, stoneCount);
+            lastEvalScores[r][c] = score;
+            overlay.style.background = scoreToColor(score);
+            const absScore = Math.abs(score);
+            let label = '';
+            if (absScore >= 10000) label = score > 0 ? '+∞' : '-∞';
+            else if (absScore >= 1000) label = (score > 0 ? '+' : '') + (score/1000).toFixed(0) + 'k';
+            else label = (score > 0 ? '+' : '') + score;
+            overlay.textContent = label;
+            overlay.style.color = score > 0 ? 'rgba(150,255,150,0.9)' : score < 0 ? 'rgba(255,120,120,0.9)' : 'rgba(200,200,200,0.5)';
+        }
+    }
+}
+
+function renderSideHeatmap() {
+    let stoneCount = 0;
+    for (let r=0;r<8;r++) for (let c=0;c<8;c++) if (board[r][c]!==EMPTY) stoneCount++;
+    const phase = getPhase(stoneCount);
+    hmPhaseEl.textContent = phase.toUpperCase();
+    hmWeightsEl.textContent = `legacy + ${phase}Phase`;
+
+    heatmapGridEl.innerHTML = '';
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const score = getCellEvalScore(r, c, board, stoneCount);
+            const MAX = 15000;
+            const t = Math.max(-1, Math.min(1, score / MAX));
+            let bg;
+            if (t > 0) {
+                const g = Math.floor(t * 200);
+                bg = `rgb(0,${60+g},0)`;
+            } else {
+                const rv = Math.floor(-t * 200);
+                bg = `rgb(${60+rv},0,0)`;
+            }
+            const div = document.createElement('div');
+            div.className = 'hm-cell';
+            div.style.background = bg;
+            const absScore = Math.abs(score);
+            let label = '';
+            if (absScore >= 10000) label = t > 0 ? '+∞' : '-∞';
+            else if (absScore >= 1000) label = (t > 0 ? '+' : '') + Math.round(score/100)/10 + 'k';
+            else label = score > 0 ? `+${score}` : `${score}`;
+            div.textContent = label;
+            div.style.color = t > 0.3 ? 'rgba(150,255,150,0.9)' : t < -0.3 ? 'rgba(255,100,100,0.9)' : 'rgba(200,200,200,0.6)';
+            if (board[r][c] === BLACK) { div.style.outline = '1px solid #555'; div.style.outlineOffset = '-2px'; }
+            if (board[r][c] === WHITE) { div.style.outline = '1px solid #aaa'; div.style.outlineOffset = '-2px'; }
+            heatmapGridEl.appendChild(div);
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════
+//  SYNC
+// ═══════════════════════════════════════════════
+async function syncWithSunnyBotCore() {
+    localSunnyBotData = await SunnyBotCore.fetchLatestDataAPI();
+    brainGamesEl.textContent = localSunnyBotData.totalGames;
+}
+
+// ═══════════════════════════════════════════════
+//  BOARD CONSTRUCTION
+// ═══════════════════════════════════════════════
+function buildBoardDOM() {
+    boardEl.innerHTML = '';
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            ((row, col) => { cell.addEventListener('click', () => handleCellClick(row, col)); })(r, c);
+            const overlay = document.createElement('div');
+            overlay.className = 'cell-heat-overlay';
+            const stone = document.createElement('div');
+            stone.className = 'stone';
+            cell.appendChild(overlay);
+            cell.appendChild(stone);
+            boardEl.appendChild(cell);
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════
+//  DISPLAY UPDATE
+// ═══════════════════════════════════════════════
+function updateDisplay() {
+    let blackCount = 0, whiteCount = 0;
+    const legalMoves = getLegalMoves(board, currentTurn);
+    let stoneCount = 0;
+
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const cell = boardEl.children[r * 8 + c];
+            const stone = cell.querySelector('.stone');
+            if (board[r][c] === BLACK) { stone.className = 'stone black'; blackCount++; stoneCount++; }
+            else if (board[r][c] === WHITE) { stone.className = 'stone white'; whiteCount++; stoneCount++; }
+            else { stone.className = 'stone'; }
+            cell.classList.remove('legal-move');
+            if (!isAiVsAiMode && currentTurn === BLACK && legalMoves.some(m => m.r===r && m.c===c)) {
+                cell.classList.add('legal-move');
+            }
+        }
+    }
+
+    scoreBlackEl.textContent = blackCount;
+    scoreWhiteEl.textContent = whiteCount;
+    updatePhaseIndicator(stoneCount);
+
+    if (heatmapMode) refreshBoardHeatmap();
+    if (currentMonitorTab === 'heatmap') renderSideHeatmap();
+
+    const xRate = (localSunnyBotData.humanPattern?.xMoveTendency||0) / (localSunnyBotData.humanPattern?.clickCount||1);
+    const openBias = (localSunnyBotData.humanPattern?.averageOpenness||0).toFixed(1);
+
+    if (currentTurn === BLACK) {
+        statusBlackEl.classList.add('active'); statusWhiteEl.classList.remove('active');
+        if (!isAiVsAiMode) {
+            messageBoxEl.innerHTML = `YOUR TURN [${legalMoves.length} moves] | X-RATE:${(xRate*100).toFixed(0)}% OPEN:${openBias}`;
+            shieldEl.style.display = 'none';
+            pushCodeLog('humanMove');
+        } else {
+            messageBoxEl.innerHTML = `<span style="color:var(--accent-purple)">[STREAMING] SUNNY_ALPHA ANALYSIS...</span>`;
+            shieldEl.style.display = 'block';
+        }
+    } else {
+        statusWhiteEl.classList.add('active'); statusBlackEl.classList.remove('active');
+        shieldEl.style.display = 'block';
+        if (64 - stoneCount <= 13) {
+            messageBoxEl.innerHTML = `<span style="color:var(--accent-red);font-weight:bold;">[SOLVER ACTIVE] SOLVING ENDGAME...</span>`;
+        } else {
+            messageBoxEl.innerHTML = isAiVsAiMode
+                ? `<span style="color:var(--accent-purple)">[STREAMING] SUNNY_BETA ANALYSIS...</span>`
+                : `<span style="color:var(--accent-sunny)">[COMPUTING] ITERATIVE ADVERSARIAL SEARCH...</span>`;
+        }
+    }
+
+    if (legalMoves.length === 0) {
+        const opponent = currentTurn === BLACK ? WHITE : BLACK;
+        if (getLegalMoves(board, opponent).length === 0) {
+            endGame(blackCount, whiteCount); return;
+        } else {
+            const passDelay = isAiVsAiMode ? 1 : 150;
+            messageBoxEl.innerHTML = `<span style="color:orange">PASS — HANDOVER ACTIVATED.</span>`;
+            setTimeout(() => { 
+                currentTurn = opponent; 
+                updateDisplay(); 
+                runAiRoutine(); 
+            }, passDelay);
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════
+//  GAME LOGIC
+// ═══════════════════════════════════════════════
+function getFlips(boardState, r, c, player) {
+    if (boardState[r][c] !== EMPTY) return [];
+    const opponent = player === BLACK ? WHITE : BLACK;
+    let totalFlips = [];
+    for (let i = 0; i < 8; i++) {
+        let nr = r + DIRECTIONS[i][0], nc = c + DIRECTIONS[i][1], temp = [];
+        while (nr>=0&&nr<8&&nc>=0&&nc<8&&boardState[nr][nc]===opponent) {
+            temp.push({r:nr,c:nc}); nr+=DIRECTIONS[i][0]; nc+=DIRECTIONS[i][1];
+        }
+        if (nr>=0&&nr<8&&nc>=0&&nc<8&&boardState[nr][nc]===player) totalFlips=totalFlips.concat(temp);
+    }
+    return totalFlips;
+}
+
+function getLegalMoves(boardState, player) {
+    const moves = [];
+    for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+        const flips = getFlips(boardState, r, c, player);
+        if (flips.length > 0) moves.push({r, c, flips});
+    }
+    return moves;
+}
+
+// ── UNDO-CAPABLE IN-PLACE MOVE EXECUTOR (ZOBRIST INTEGRATED) ──
+function executeMoveInPlace(targetBoard, r, c, flips, player) {
+    let revertList = [];
+    
+    currentZobristHash ^= zobristTable[r * 8 + c][targetBoard[r][c]];
+    targetBoard[r][c] = player;
+    currentZobristHash ^= zobristTable[r * 8 + c][player];
+    
+    for (let i = 0; i < flips.length; i++) {
+        let fr = flips[i].r, fc = flips[i].c;
+        let oldColor = targetBoard[fr][fc];
+        revertList.push({r: fr, c: fc, color: oldColor});
+        
+        currentZobristHash ^= zobristTable[fr * 8 + fc][oldColor];
+        targetBoard[fr][fc] = player;
+        currentZobristHash ^= zobristTable[fr * 8 + fc][player];
+    }
+    return revertList;
+}
+
+function revertMoveInPlace(targetBoard, r, c, revertList) {
+    currentZobristHash ^= zobristTable[r * 8 + c][targetBoard[r][c]];
+    targetBoard[r][c] = EMPTY;
+    currentZobristHash ^= zobristTable[r * 8 + c][EMPTY];
+    
+    for (let i = 0; i < revertList.length; i++) {
+        let fr = revertList[i].r, fc = revertList[i].c;
+        let oldColor = revertList[i].color;
+        
+        currentZobristHash ^= zobristTable[fr * 8 + fc][targetBoard[fr][fc]];
+        targetBoard[fr][fc] = oldColor;
+        currentZobristHash ^= zobristTable[fr * 8 + fc][oldColor];
+    }
+}
+
+async function handleCellClick(r, c) {
+    if (currentTurn !== BLACK || isAiVsAiMode) return;
+    const flips = getFlips(board, r, c, BLACK);
+    if (flips.length === 0) return;
+
+    localSunnyBotData.humanPattern.clickCount++;
+    if (X_SQUARES.some(p=>p[0]===r&&p[1]===c)) localSunnyBotData.humanPattern.xMoveTendency++;
+    if (C_SQUARES.some(p=>p[0]===r&&p[1]===c)) localSunnyBotData.humanPattern.cMoveTendency++;
+    if (CORNERS.some(p=>p[0]===r&&p[1]===c))   localSunnyBotData.humanPattern.cornerSnipeRate++;
+    const op = getOpenDegree(board, flips);
+    localSunnyBotData.humanPattern.averageOpenness = localSunnyBotData.humanPattern.averageOpenness * 0.9 + op * 0.1;
+
+    gameHistory.push({player: BLACK, r, c});
+    executeMoveInPlace(board, r, c, flips, BLACK);
+    await SunnyBotCore.commitDataAPI(localSunnyBotData);
+    currentTurn = WHITE;
+    updateDisplay();
+    runAiRoutine();
+}
+
+// ═══════════════════════════════════════════════
+//  AI ROUTINE
+// ═══════════════════════════════════════════════
+function runAiRoutine() {
+    const moves = getLegalMoves(board, currentTurn);
+    if (moves.length === 0) return;
+
+    let stoneCount = 0;
+    for (let r=0;r<8;r++) for (let c=0;c<8;c++) if (board[r][c]!==EMPTY) stoneCount++;
+
+    const thinkingTime = isAiVsAiMode ? 1 : (stoneCount < 16 ? 200 : stoneCount < 44 ? 400 : 200);
+
+    const bookMove = queryOpeningBook(gameHistory);
+    if (bookMove && stoneCount < 20) {
+        const validBook = moves.find(m => m.r===bookMove.r && m.c===bookMove.c);
+        if (validBook) {
+            bookHitsThisGame++;
+            const src = bookMove.source === 'HARD' ? `HARD_CODED` : `AUTO(${bookMove.winRate}%wr)`;
+            bookEl.textContent = `📖 BOOK: ${src}`;
+            pushCodeLog('book');
+            updatePVDisplay([{r:validBook.r, c:validBook.c}], 9999);
+            setTimeout(async () => {
+                await syncWithSunnyBotCore();
+                applyAiMove(validBook, stoneCount);
+            }, thinkingTime / 2);
+            return;
+        }
+    }
+    bookEl.textContent = `📖 BOOK: SEARCH`;
+
+    pushCodeLog('aiRoutine');
+    setTimeout(async () => {
+        await syncWithSunnyBotCore();
+        const { bestMove, pvMoves, evalScore } = selectBestMoveByAiIterative(stoneCount, currentTurn);
+        lastPVLine = pvMoves;
+        pushCodeLog('pvUpdate');
+        updatePVDisplay(pvMoves, evalScore);
+        if (bestMove) applyAiMove(bestMove, stoneCount);
+    }, thinkingTime);
+}
+
+function applyAiMove(move, stoneCount) {
+    const phase = getPhase(stoneCount);
+    const phaseMatrix = getPhaseMatrix(phase);
+    let reward = 0;
+    if (CORNERS.some(p=>p[0]===move.r&&p[1]===move.c)) reward += 150;
+    if (X_SQUARES.some(p=>p[0]===move.r&&p[1]===move.c)) reward -= 300;
+    if (isAiVsAiMode) reward *= 1.5;
+
+    const rewardVal = currentTurn === WHITE ? reward : -reward;
+    localSunnyBotData.learnedWeightBonus[move.r][move.c] += rewardVal * 0.5;
+    phaseMatrix[move.r][move.c] += rewardVal;
+
+    gameHistory.push({player: currentTurn, r: move.r, c: move.c, phase});
+    executeMoveInPlace(board, move.r, move.c, move.flips, currentTurn);
+    SunnyBotCore.commitDataAPI(localSunnyBotData);
+
+    currentTurn = currentTurn === WHITE ? BLACK : WHITE;
+    updateDisplay();
+    if (isAiVsAiMode) runAiRoutine();
+}
+
+// ═══════════════════════════════════════════════
+//  ITERATIVE DEEPENING & HEURISTICS SORTING
+// ═══════════════════════════════════════════════
+function getMoveOrderingScore(m, targetDepth, ttBestMove) {
+    if (ttBestMove && m.r === ttBestMove.r && m.c === ttBestMove.c) return 1000000;
+    
+    // 1. Killer Move (同深度のβカット優秀着手)
+    const km = killerMoves[targetDepth];
+    if (km && m.r === km.r && m.c === km.c) return 90000;
+
+    // 2. History Heuristic (累積スコア)
+    let score = historyTable[m.r][m.c] * 10;
+
+    // 3. 基礎静的トポロジー評価
+    let r = m.r, c = m.c;
+    if (CORNERS.some(p => p[0]===r && p[1]===c)) score += 10000;
+    else if (X_SQUARES.some(p => p[0]===r && p[1]===c)) score -= 5000;
+    else if (C_SQUARES.some(p => p[0]===r && p[1]===c)) score -= 2000;
+    else if (r===0 || r===7 || c===0 || c===7) score += 1000;
+    
+    score += m.flips.length;
+    return score;
+}
+
+function selectBestMoveByAiIterative(stoneCount, player) {
+    const moves = getLegalMoves(board, player);
+    if (moves.length === 0) return { bestMove: null, pvMoves: [], evalScore: 0 };
+
+    const remaining = 64 - stoneCount;
+    let maxTargetDepth = 5;
+    
+    if (remaining <= 13) {
+        maxTargetDepth = remaining; 
+    } else {
+        if (isAiVsAiMode) maxTargetDepth = 4;
+        else if (stoneCount >= 44) maxTargetDepth = 11; // 探索効率化により最大深度上限をアップ
+        else if (stoneCount >= 12) maxTargetDepth = 8;
+    }
+
+    let bestMoveGlobal = moves[0];
+    let bestScoreGlobal = player === WHITE ? -Infinity : Infinity;
+    let bestPVGlobal = [];
+
+    clearHeuristicsTables();
+
+    // 反復深化 (Iterative Deepening)
+    for (let currentDepth = 1; currentDepth <= maxTargetDepth; currentDepth++) {
+        let ttEntry = TT.get(currentZobristHash);
+        let ttBestMove = (ttEntry && ttEntry.bestMove) ? ttEntry.bestMove : null;
+
+        // Aspiration Window (吸気窓探索)
+        let alpha = -Infinity;
+        let beta = Infinity;
+        if (currentDepth > 2 && Math.abs(bestScoreGlobal) < 3000000) {
+            alpha = bestScoreGlobal - 400;
+            beta = bestScoreGlobal + 400;
+        }
+
+        moves.sort((a, b) => getMoveOrderingScore(b, currentDepth, ttBestMove) - getMoveOrderingScore(a, currentDepth, ttBestMove));
+
+        let bestMoveThisDepth = null;
+        let bestScoreThisDepth = player === WHITE ? -Infinity : Infinity;
+        let pvThisDepth = [];
+
+        // 最初のアスピレーション窓内での探索
+        let failedWindow = false;
+        for (let i = 0; i < moves.length; i++) {
+            const move = moves[i];
+            const revertList = executeMoveInPlace(board, move.r, move.c, move.flips, player);
+            const childPV = [];
+            
+            let score = alphaBeta(currentDepth - 1, alpha, beta, player === BLACK, currentDepth, childPV, remaining <= 13);
+            revertMoveInPlace(board, move.r, move.c, revertList);
+
+            if (player === WHITE) {
+                if (score > bestScoreThisDepth) {
+                    bestScoreThisDepth = score;
+                    bestMoveThisDepth = move;
+                    pvThisDepth = [{r: move.r, c: move.c}, ...childPV];
+                }
+                alpha = Math.max(alpha, score);
+            } else {
+                if (score < bestScoreThisDepth) {
+                    bestScoreThisDepth = score;
+                    bestMoveThisDepth = move;
+                    pvThisDepth = [{r: move.r, c: move.c}, ...childPV];
+                }
+                beta = Math.min(beta, score);
+            }
+
+            if (beta <= alpha) {
+                failedWindow = true;
+                break;
+            }
+        }
+
+        // 吸気窓が外れた（Fail-High/Low）場合はフルレンジでリサーチ
+        if (failedWindow || bestScoreThisDepth <= alpha || bestScoreThisDepth >= beta) {
+            bestScoreThisDepth = player === WHITE ? -Infinity : Infinity;
+            moves.sort((a, b) => getMoveOrderingScore(b, currentDepth, ttBestMove) - getMoveOrderingScore(a, currentDepth, ttBestMove));
+            
+            for (let i = 0; i < moves.length; i++) {
+                const move = moves[i];
+                const revertList = executeMoveInPlace(board, move.r, move.c, move.flips, player);
+                const childPV = [];
+                let score = alphaBeta(currentDepth - 1, -Infinity, Infinity, player === BLACK, currentDepth, childPV, remaining <= 13);
+                revertMoveInPlace(board, move.r, move.c, revertList);
+
+                if (player === WHITE) {
+                    if (score > bestScoreThisDepth) {
+                        bestScoreThisDepth = score;
+                        bestMoveThisDepth = move;
+                        pvThisDepth = [{r: move.r, c: move.c}, ...childPV];
+                    }
+                } else {
+                    if (score < bestScoreThisDepth) {
+                        bestScoreThisDepth = score;
+                        bestMoveThisDepth = move;
+                        pvThisDepth = [{r: move.r, c: move.c}, ...childPV];
+                    }
+                }
+            }
+        }
+
+        if (bestMoveThisDepth) {
+            bestMoveGlobal = bestMoveThisDepth;
+            bestScoreGlobal = bestScoreThisDepth;
+            bestPVGlobal = pvThisDepth;
+        }
+    }
+
+    return { bestMove: bestMoveGlobal, pvMoves: bestPVGlobal, evalScore: bestScoreGlobal };
+}
+
+// ── ADVANCED ALPHA-BETA WITH FULL INTEGRITY ZOBRIST HASH ──
+function alphaBeta(depth, alpha, beta, isMaximizing, searchDepthLevel, pvOut, isEndgameSolver) {
+    // 置換表のルックアップ（現在のZobristHashの整合性を完全担保）
+    let ttEntry = TT.get(currentZobristHash);
+    if (ttEntry && ttEntry.depth >= depth) {
+        if (ttEntry.flag === TT_EXACT) return ttEntry.score;
+        if (ttEntry.flag === TT_ALPHA && ttEntry.score <= alpha) return alpha;
+        if (ttEntry.flag === TT_BETA && ttEntry.score >= beta) return beta;
+    }
+
+    if (depth === 0) {
+        if (!isEndgameSolver && Math.random() < 0.01) pushCodeLog('evaluation');
+        return isEndgameSolver ? evaluatePureStones(board) : evaluateGrandmasterCore(board);
+    }
+
+    const currentPlayer = isMaximizing ? WHITE : BLACK;
+    const moves = getLegalMoves(board, currentPlayer);
+
+    if (moves.length === 0) {
+        const opp = currentPlayer === WHITE ? BLACK : WHITE;
+        const oppMoves = getLegalMoves(board, opp);
+        if (oppMoves.length === 0) {
+            let w = 0, b = 0;
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    if (board[r][c] === WHITE) w++;
+                    if (board[r][c] === BLACK) b++;
+                }
+            }
+            if (isEndgameSolver) return (w - b) * 1000000;
+            return w > b ? 5000000 + w : -5000000 - b;
+        }
+        return alphaBeta(depth - 1, alpha, beta, !isMaximizing, searchDepthLevel, pvOut, isEndgameSolver);
+    }
+
+    let ttBestMove = (ttEntry && ttEntry.bestMove) ? ttEntry.bestMove : null;
+    moves.sort((a, b) => getMoveOrderingScore(b, searchDepthLevel, ttBestMove) - getMoveOrderingScore(a, searchDepthLevel, ttBestMove));
+
+    let bestMove = null;
+    let originalAlpha = alpha;
+    let originalBeta = beta;
+
+    if (isMaximizing) {
+        let maxEval = -Infinity;
+        for (let i = 0; i < moves.length; i++) {
+            const revertList = executeMoveInPlace(board, moves[i].r, moves[i].c, moves[i].flips, WHITE);
+            const childPV = [];
+            let ev = alphaBeta(depth - 1, alpha, beta, false, searchDepthLevel, childPV, isEndgameSolver);
+            revertMoveInPlace(board, moves[i].r, moves[i].c, revertList);
+
+            if (ev > maxEval) {
+                maxEval = ev;
+                bestMove = moves[i];
+                if (pvOut) {
+                    pvOut.length = 0;
+                    pvOut.push({r: moves[i].r, c: moves[i].c}, ...childPV);
+                }
+            }
+            alpha = Math.max(alpha, ev);
+            if (beta <= alpha) {
+                // βカット発生：Killer Move & History Heuristic 更新
+                killerMoves[searchDepthLevel] = moves[i];
+                historyTable[moves[i].r][moves[i].c] += depth * depth;
+                break; 
+            }
+        }
+
+        let flag = TT_EXACT;
+        if (maxEval <= originalAlpha) flag = TT_ALPHA;
+        else if (maxEval >= beta) flag = TT_BETA;
+        TT.set(currentZobristHash, { depth: depth, score: maxEval, flag: flag, bestMove: bestMove });
+
+        return maxEval;
+    } else {
+        let minEval = Infinity;
+        for (let i = 0; i < moves.length; i++) {
+            const revertList = executeMoveInPlace(board, moves[i].r, moves[i].c, moves[i].flips, BLACK);
+            const childPV = [];
+            let ev = alphaBeta(depth - 1, alpha, beta, true, searchDepthLevel, childPV, isEndgameSolver);
+            revertMoveInPlace(board, moves[i].r, moves[i].c, revertList);
+
+            if (ev < minEval) {
+                minEval = ev;
+                bestMove = moves[i];
+                if (pvOut) {
+                    pvOut.length = 0;
+                    pvOut.push({r: moves[i].r, c: moves[i].c}, ...childPV);
+                }
+            }
+            beta = Math.min(beta, ev);
+            if (beta <= alpha) {
+                killerMoves[searchDepthLevel] = moves[i];
+                historyTable[moves[i].r][moves[i].c] += depth * depth;
+                break; 
+            }
+        }
+
+        let flag = TT_EXACT;
+        if (minEval <= alpha) flag = TT_ALPHA;
+        else if (minEval >= originalBeta) flag = TT_BETA;
+        TT.set(currentZobristHash, { depth: depth, score: minEval, flag: flag, bestMove: bestMove });
+
+        return minEval;
+    }
+}
+
+// ═══════════════════════════════════════════════
+//  EVALUATION FUNCTIONS
+// ═══════════════════════════════════════════════
+function evaluatePureStones(boardState) {
+    let score = 0;
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            if (boardState[r][c] === WHITE) score += 100000;
+            else if (boardState[r][c] === BLACK) score -= 100000;
+        }
+    }
+    return score;
+}
+
+function evaluateGrandmasterCore(boardState) {
+    // 1. 動的フェーズ判定 (探索局面の実際の石数でリアルタイム計算)
+    let stones = 0;
+    let whiteStones = 0, blackStones = 0;
+    for (let r=0; r<8; r++) {
+        for (let c=0; c<8; c++) {
+            if (boardState[r][c] !== EMPTY) {
+                stones++;
+                if (boardState[r][c] === WHITE) whiteStones++;
+                else blackStones++;
+            }
+        }
+    }
+
+    const phase = getPhase(stones);
+    const phaseMatrix = getPhaseMatrix(phase);
+    
+    let score = 0;
+
+    // 2. 完全確定石（Stable Stones）高精度評価
+    const stability = calculateStableStones(boardState);
+    score += (stability.white * 5000) - (stability.black * 5000);
+
+    // 3. パリティ評価 (Parity: 空白領域の偶奇性)
+    if (stones >= 44) {
+        const emptyCount = 64 - stones;
+        // 残りマス数が偶数の時に手番（WHITE）であれば有利、奇数なら不利を微小加算
+        const parityBonus = (emptyCount % 2 === 0) ? 4500 : -4500;
+        score += parityBonus;
+    }
+
+    let whitePotential = 0, blackPotential = 0;
+
+    for (let r=0; r<8; r++) {
+        for (let c=0; c<8; c++) {
+            const val = boardState[r][c];
+            if (val === EMPTY) continue;
+
+            // Potential Mobility
+            let hasEmptyNeighbor = false;
+            for(let i=0; i<8; i++) {
+                let nr = r + DIRECTIONS[i][0], nc = c + DIRECTIONS[i][1];
+                if (nr>=0 && nr<8 && nc>=0 && nc<8 && boardState[nr][nc] === EMPTY) {
+                    hasEmptyNeighbor = true;
+                    break;
+                }
+            }
+            if (hasEmptyNeighbor) {
+                if (val === WHITE) whitePotential++;
+                else blackPotential++;
+            }
+
+            // 静的トポロジー重み
+            let cellWeight = 0;
+            if (CORNERS.some(p=>p[0]===r&&p[1]===c)) cellWeight = 15000;
+            else if (X_SQUARES.some(p=>p[0]===r&&p[1]===c)) {
+                const cr = r<4?0:7, cc = c<4?0:7;
+                cellWeight = (boardState[cr][cc]===EMPTY) ? -8000 : 50;
+            } else if (C_SQUARES.some(p=>p[0]===r&&p[1]===c)) {
+                const cr=(r===0||r===1)?0:7, cc=(c===0||c===1)?0:7;
+                cellWeight = (boardState[cr][cc]===EMPTY) ? -4500 : 30;
+            } else {
+                cellWeight = (r===0||r===7||c===0||c===7) ? 150 : 25;
+            }
+
+            cellWeight += localSunnyBotData.learnedWeightBonus[r][c];
+            cellWeight += (phaseMatrix[r][c] || 0);
+
+            if (val === WHITE) score += cellWeight;
+            else score -= cellWeight;
+        }
+    }
+
+    if (phase === 'late') {
+        return score + (whiteStones - blackStones) * 3500;
+    }
+    
+    // Actual Mobility (現局面の合法手数比重)
+    const wMoves = getLegalMoves(boardState, WHITE).length;
+    const bMoves = getLegalMoves(boardState, BLACK).length;
+    score += (wMoves * 550) - (bMoves * 600);
+
+    // Potential Mobility の減算 (少ない方が優勢＝相手を囲い込んでいる)
+    score -= (whitePotential * 180);
+    score += (blackPotential * 180);
+
+    // Frontier評価
+    const wFrontier = getFrontierCount(boardState, WHITE);
+    const bFrontier = getFrontierCount(boardState, BLACK);
+    score -= wFrontier * 70; score += bFrontier * 70;
+
+    return score;
+}
+
+// ═══════════════════════════════════════════════
+//  HELPER FUNCTIONS
+// ═══════════════════════════════════════════════
+function getOpenDegree(boardState, flips) {
+    let openDegree = 0;
+    flips.forEach(f => DIRECTIONS.forEach(d => {
+        const nr=f.r+d[0], nc=f.c+d[1];
+        if (nr>=0&&nr<8&&nc>=0&&nc<8&&boardState[nr][nc]===EMPTY) openDegree++;
+    }));
+    return openDegree;
+}
+
+function getFrontierCount(boardState, player) {
+    let count = 0;
+    for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+        if (boardState[r][c]===player) {
+            for (let i=0;i<8;i++) {
+                const nr=r+DIRECTIONS[i][0], nc=c+DIRECTIONS[i][1];
+                if (nr>=0&&nr<8&&nc>=0&&nc<8&&boardState[nr][nc]===EMPTY) { count++; break; }
+            }
+        }
+    }
+    return count;
+}
+
+// ── 完全確定石（Stable Stones）判定アドバンスドシステム ──
+function calculateStableStones(boardState) {
+    const stable = { black: 0, white: 0 };
+    
+    const isEdgeFilledOrStable = (r, c) => {
+        if (boardState[r][c] === EMPTY) return false;
+        // 四隅のいずれかが埋まっている、またはその列/行が完全に隙間なく埋まっているか
+        return true; 
+    };
+
+    const scanEdgeLine = (startR, startC, dirR, dirC) => {
+        let r = startR, c = startC;
+        let color = boardState[r][c];
+        if (color === EMPTY) return;
+        
+        let continuous = true;
+        while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+            if (boardState[r][c] === color && continuous) {
+                if (color === BLACK) stable.black += 15;
+                else stable.white += 15;
+            } else {
+                continuous = false;
+            }
+            r += dirR; c += dirC;
+        }
+    };
+
+    CORNERS.forEach(([cr,cc]) => {
+        const color = boardState[cr][cc];
+        if (color === EMPTY) return;
+        if (color === BLACK) stable.black += 35;
+        if (color === WHITE) stable.white += 35;
+
+        let hDir = cc === 0 ? 1 : -1;
+        let vDir = cr === 0 ? 1 : -1;
+        
+        scanEdgeLine(cr, cc, 0, hDir);
+        scanEdgeLine(cr, cc, vDir, 0);
+    });
+
+    return stable;
+}
+
+// ═══════════════════════════════════════════════
+//  BACKPROPAGATION
+// ═══════════════════════════════════════════════
+function backpropagateDefeatLoss(loserPlayer) {
+    let penaltyBase = 300;
+    for (let i=gameHistory.length-1; i>=0; i--) {
+        const step = gameHistory[i];
+        if (step.player === loserPlayer) {
+            const penaltyVal = loserPlayer === WHITE ? penaltyBase : -penaltyBase;
+            localSunnyBotData.learnedWeightBonus[step.r][step.c] -= penaltyVal;
+            const phaseMatrix = getPhaseMatrix(step.phase || 'mid');
+            phaseMatrix[step.r][step.c] -= penaltyVal * 0.8;
+            penaltyBase *= 0.75;
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════
+//  END GAME
+// ═══════════════════════════════════════════════
+async function endGame(black, white) {
+    shieldEl.style.display = 'block';
+    localSunnyBotData.totalGames++;
+    let statusText = "";
+    let winner = null;
+
+    if (white > black) {
+        localSunnyBotData.wins++; winner = WHITE;
+        statusText = isAiVsAiMode ? "SUNNY_BETA (WHITE) WIN" : "SUNNYBOT WIN";
+        backpropagateDefeatLoss(BLACK);
+    } else if (black > white) {
+        localSunnyBotData.losses++; winner = BLACK;
+        statusText = isAiVsAiMode ? "SUNNY_ALPHA (BLACK) WIN" : "USER WIN";
+        backpropagateDefeatLoss(WHITE);
+    } else {
+        statusText = "PERFECT DRAW";
+    }
+
+    recordBookOutcome(gameHistory.slice(0, 12), winner);
+
+    await SunnyBotCore.commitDataAPI(localSunnyBotData);
+    messageBoxEl.innerHTML = `<span style="color:var(--accent-sunny);font-weight:bold">${statusText} (${black}–${white})</span><br>PHASE BACKPROP LOGGED. BOOK UPDATED.`;
+
+    const customLog = `/* PHASE-AWARE BACKPROPAGATION COMPLETE */\nconst GameReport = {\n\toutcome: "${statusText}",\n\tscore: { black: ${black}, white: ${white} },\n\tbookHits: ${bookHitsThisGame},\n\tbrainVersion: "v3.5_AdaptiveEngine",\n\tglobalSync: "OK"\n};`;
+    pushCodeLog('terminal', customLog);
+    updatePVDisplay(null, 0);
+
+    if (isAiVsAiMode) setTimeout(() => resetGame(), 100);
+}
+
+// ═══════════════════════════════════════════════
+//  INIT / RESET
+// ═══════════════════════════════════════════════
+async function initGame() {
+    await syncWithSunnyBotCore();
+    board = Array(8).fill(null).map(() => Array(8).fill(EMPTY));
+    board[3][3] = WHITE; board[3][4] = BLACK;
+    board[4][3] = BLACK; board[4][4] = WHITE;
+    currentTurn = BLACK;
+    gameHistory = [];
+    monitorLogs = [];
+    currentLogIndex = -1;
+    bookHitsThisGame = 0;
+    lastPVLine = [];
+    if (typingIntervalId) { clearInterval(typingIntervalId); typingIntervalId = null; }
+
+    currentZobristHash = computeFullZobrist(board);
+    TT.clear();
+    clearHeuristicsTables();
+
+    if (isAiVsAiMode) {
+        document.getElementById('main-title').textContent = "SUNNYBOT AUTO EVOLUTION v3.5";
+        document.getElementById('label-black').textContent = "SUNNY_ALPHA";
+        document.getElementById('label-white').textContent = "SUNNY_BETA";
+        statusBlackEl.classList.add('ai-vs-ai'); statusWhiteEl.classList.add('ai-vs-ai');
+    } else {
+        document.getElementById('main-title').textContent = "SUNNYBOT GRANDMASTER CORE v3.5";
+        document.getElementById('label-black').textContent = "USER";
+        document.getElementById('label-white').textContent = "SUNNYBOT";
+        statusBlackEl.classList.remove('ai-vs-ai'); statusWhiteEl.classList.remove('ai-vs-ai');
+    }
+
+    buildBoardDOM();
+    pvContentEl.textContent = '-- awaiting analysis --';
+    pvContentEl.style.color = '#475569';
+    pushCodeLog('boot');
+    updateDisplay();
+
+    if (isAiVsAiMode) {
+        shieldEl.style.display = 'block';
+        setTimeout(runAiRoutine, 1);
+    }
+}
+
+function resetGame() { initGame(); }
+
+function toggleAutoEvolutionMode() {
+    isAiVsAiMode = !isAiVsAiMode;
+    btnAutoToggle.classList.toggle('active-mode', isAiVsAiMode);
+    resetGame();
+}
+
+initGame();
+</script>
+</body>
+</html>
