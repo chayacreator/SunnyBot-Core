@@ -839,6 +839,207 @@
             #code-viewer { font-size: 0.62rem; }
         }
 
+        /* ══════════════════════════════════════════════
+           POST-GAME ANALYSIS MODAL
+        ══════════════════════════════════════════════ */
+        #analysis-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 99998;
+            background: rgba(3,7,18,0.92);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        #analysis-modal.active { display: flex; }
+
+        #analysis-panel {
+            background: #0b1120;
+            border: 1px solid rgba(245,158,11,0.25);
+            border-radius: 12px;
+            width: min(680px, 100%);
+            max-height: 90vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            box-shadow: 0 0 60px rgba(245,158,11,0.08), 0 24px 48px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #analysis-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 18px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+
+        #analysis-title {
+            font-family: "Orbitron", sans-serif;
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--accent-sunny);
+            text-shadow: 0 0 10px rgba(245,158,11,0.4);
+        }
+
+        #analysis-close {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #64748b;
+            width: 28px; height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.15s;
+        }
+        #analysis-close:hover { background: var(--accent-red); color: #fff; border-color: var(--accent-red); }
+
+        #analysis-body {
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        /* ── 結果バナー ── */
+        #analysis-result-banner {
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: "Orbitron", sans-serif;
+            font-size: 1rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+
+        /* ── セクションラベル ── */
+        .analysis-section-label {
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.62rem;
+            color: #475569;
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+        }
+
+        /* ── 勝率推移グラフ ── */
+        #winrate-chart-wrap {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+
+        #winrate-svg {
+            width: 100%;
+            height: 120px;
+            display: block;
+        }
+
+        /* ── 手ごとのスコア表 ── */
+        #move-table-wrap {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.04);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .move-row {
+            display: grid;
+            grid-template-columns: 32px 48px 56px 1fr 60px;
+            gap: 6px;
+            align-items: center;
+            padding: 4px 2px;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.62rem;
+        }
+        .move-row.header { color: #475569; font-size: 0.58rem; padding-bottom: 6px; }
+        .move-row.blunder { background: rgba(239,68,68,0.08); border-radius: 4px; }
+        .move-row.good    { background: rgba(34,197,94,0.06); border-radius: 4px; }
+
+        .move-badge {
+            display: inline-block;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 0.55rem;
+            font-weight: 700;
+        }
+        .badge-blunder { background: rgba(239,68,68,0.3); color: #f87171; }
+        .badge-mistake { background: rgba(245,158,11,0.3); color: #fbbf24; }
+        .badge-good    { background: rgba(34,197,94,0.25); color: #4ade80; }
+        .badge-best    { background: rgba(0,242,254,0.2);  color: var(--accent-neon); }
+        .badge-book    { background: rgba(168,85,247,0.25); color: #c084fc; }
+
+        /* ── 統計グリッド ── */
+        #analysis-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 10px 12px;
+            text-align: center;
+        }
+        .stat-card .stat-value {
+            font-family: "Orbitron", sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+        .stat-card .stat-label {
+            font-size: 0.55rem;
+            color: #475569;
+            font-family: "JetBrains Mono", monospace;
+            letter-spacing: 0.05em;
+        }
+
+        /* ── 総評テキスト ── */
+        #analysis-comment {
+            background: rgba(245,158,11,0.05);
+            border: 1px solid rgba(245,158,11,0.15);
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-size: 0.72rem;
+            color: #94a3b8;
+            line-height: 1.7;
+        }
+        #analysis-comment strong { color: var(--accent-sunny); }
+
+        /* ── フッターボタン ── */
+        #analysis-footer {
+            padding: 12px 18px 16px;
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            flex-shrink: 0;
+        }
+        #analysis-footer button {
+            flex: 1;
+            padding: 10px;
+            font-size: 0.72rem;
+        }
+
+        /* モバイル調整 */
+        @media (max-width: 900px) {
+            #analysis-panel { border-radius: 8px; max-height: 85vh; }
+            #analysis-stats-grid { grid-template-columns: repeat(3,1fr); gap: 6px; }
+            .stat-card .stat-value { font-size: 0.9rem; }
+            .move-row { font-size: 0.58rem; grid-template-columns: 28px 44px 50px 1fr 54px; }
+        }
+
     </style>
 </head>
 <body>
@@ -932,6 +1133,58 @@
         </div>
     </div>
 </div>
+
+<!-- ══ POST-GAME ANALYSIS MODAL ══ -->
+<div id="analysis-modal">
+  <div id="analysis-panel">
+    <div id="analysis-header">
+      <div id="analysis-title">POST-GAME ANALYSIS</div>
+      <button id="analysis-close" onclick="closeAnalysis()">✕</button>
+    </div>
+    <div id="analysis-body">
+      <div id="analysis-result-banner">—</div>
+
+      <div>
+        <div class="analysis-section-label">▸ WIN-RATE CURVE</div>
+        <div id="winrate-chart-wrap">
+          <svg id="winrate-svg" viewBox="0 0 600 120" preserveAspectRatio="none"></svg>
+        </div>
+      </div>
+
+      <div id="analysis-stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-accuracy" style="color:var(--accent-neon)">—</div>
+          <div class="stat-label">ACCURACY</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-blunders" style="color:var(--accent-red)">—</div>
+          <div class="stat-label">BLUNDERS</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-best-moves" style="color:var(--accent-green)">—</div>
+          <div class="stat-label">BEST MOVES</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="analysis-section-label">▸ MOVE-BY-MOVE ANALYSIS</div>
+        <div id="move-table-wrap">
+          <div class="move-row header">
+            <span>#</span><span>MOVE</span><span>PLAYER</span><span>EVAL SHIFT</span><span>GRADE</span>
+          </div>
+          <div id="move-table-body"></div>
+        </div>
+      </div>
+
+      <div id="analysis-comment">—</div>
+    </div>
+    <div id="analysis-footer">
+      <button onclick="closeAnalysis(); resetGame();">NEW GAME</button>
+      <button onclick="closeAnalysis()">CLOSE</button>
+    </div>
+  </div>
+</div>
+
 
 <script type="module">
 // ═══════════════════════════════════════════════
@@ -1927,7 +2180,11 @@ async function handleCellClick(r, c) {
     const op = getOpenDegree(board, flips);
     localSunnyBotData.humanPattern.averageOpenness = localSunnyBotData.humanPattern.averageOpenness * 0.9 + op * 0.1;
 
-    gameHistory.push({player: humanColor, r, c});
+    // 手を打つ前の局面評価値を記録（分析用）
+    let stoneCountNow = 0;
+    for (let rr=0;rr<8;rr++) for (let cc=0;cc<8;cc++) if (board[rr][cc]!==EMPTY) stoneCountNow++;
+    const evalNow = evaluateGrandmasterCore(board);
+    gameHistory.push({player: humanColor, r, c, evalBefore: evalNow, stonesBefore: stoneCountNow});
     executeMoveInPlace(board, r, c, flips, humanColor);
     await SunnyBotCore.commitDataAPI(localSunnyBotData);
     currentTurn = humanColor === BLACK ? WHITE : BLACK;
@@ -1989,7 +2246,10 @@ function applyAiMove(move, stoneCount) {
     localSunnyBotData.learnedWeightBonus[move.r][move.c] += rewardVal * 0.5;
     phaseMatrix[move.r][move.c] += rewardVal;
 
-    gameHistory.push({player: currentTurn, r: move.r, c: move.c, phase});
+    let stoneCountAi = 0;
+    for (let rr=0;rr<8;rr++) for (let cc=0;cc<8;cc++) if (board[rr][cc]!==EMPTY) stoneCountAi++;
+    const evalAi = evaluateGrandmasterCore(board);
+    gameHistory.push({player: currentTurn, r: move.r, c: move.c, phase, evalBefore: evalAi, stonesBefore: stoneCountAi});
     executeMoveInPlace(board, move.r, move.c, move.flips, currentTurn);
     SunnyBotCore.commitDataAPI(localSunnyBotData);
 
@@ -2455,6 +2715,270 @@ function backpropagateDefeatLoss(loserPlayer) {
     }
 }
 
+
+// ═══════════════════════════════════════════════
+//  POST-GAME ANALYSIS ENGINE
+// ═══════════════════════════════════════════════
+
+// 盤面表記: 列=A〜H, 行=1〜8
+function moveLabel(r, c) {
+    return String.fromCharCode(65 + c) + (r + 1);
+}
+
+// 評価値を人間向けに正規化（Botが有利＝正、Playerが有利＝負）
+function normalizeEval(raw, playerColor) {
+    // evaluateGrandmasterCore は WHITE有利=正
+    return playerColor === WHITE ? raw : -raw;
+}
+
+// 評価値シフトからグレードを判定
+function gradeMove(shift) {
+    // shiftはPlayerから見た変化量（正＝改善、負＝悪化）
+    if (shift >= 2000) return { label: 'BEST',    cls: 'badge-best' };
+    if (shift >= 0)    return { label: 'GOOD',    cls: 'badge-good' };
+    if (shift >= -3000) return { label: 'MISTAKE', cls: 'badge-mistake' };
+    return               { label: 'BLUNDER',  cls: 'badge-blunder' };
+}
+
+function buildWinRateCurve(evalHistory) {
+    // 評価値→勝率に変換（sigmoid スケーリング）
+    return evalHistory.map(ev => {
+        const clamped = Math.max(-30000, Math.min(30000, ev));
+        return 1 / (1 + Math.exp(-clamped / 8000));
+    });
+}
+
+function renderWinRateChart(evalHistory, playerColor) {
+    const svg = document.getElementById('winrate-svg');
+    svg.innerHTML = '';
+    const W = 600, H = 120, padX = 8, padY = 10;
+
+    if (evalHistory.length < 2) {
+        svg.innerHTML = '<text x="300" y="65" text-anchor="middle" fill="#475569" font-size="11" font-family="JetBrains Mono">NOT ENOUGH DATA</text>';
+        return;
+    }
+
+    const wrList = buildWinRateCurve(evalHistory.map(e => playerColor === WHITE ? e : -e));
+    const n = wrList.length;
+    const xStep = (W - padX * 2) / Math.max(n - 1, 1);
+
+    // 背景グリッド
+    const midY = padY + (H - padY * 2) * 0.5;
+    const grid = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    grid.setAttribute('x1', padX); grid.setAttribute('y1', midY);
+    grid.setAttribute('x2', W - padX); grid.setAttribute('y2', midY);
+    grid.setAttribute('stroke', 'rgba(255,255,255,0.06)');
+    grid.setAttribute('stroke-dasharray', '3,3');
+    svg.appendChild(grid);
+
+    // 50%ラベル
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    lbl.setAttribute('x', padX + 2); lbl.setAttribute('y', midY - 3);
+    lbl.setAttribute('fill', '#334155'); lbl.setAttribute('font-size', '9');
+    lbl.setAttribute('font-family', 'JetBrains Mono');
+    lbl.textContent = '50%';
+    svg.appendChild(lbl);
+
+    // 塗りつぶしエリア
+    let pathFill = `M${padX},${H - padY}`;
+    wrList.forEach((wr, i) => {
+        const x = padX + i * xStep;
+        const y = padY + (1 - wr) * (H - padY * 2);
+        pathFill += ` L${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    pathFill += ` L${padX + (n-1)*xStep},${H - padY} Z`;
+    const area = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    area.setAttribute('d', pathFill);
+    area.setAttribute('fill', 'rgba(0,242,254,0.06)');
+    svg.appendChild(area);
+
+    // ラインパス
+    let pathD = '';
+    wrList.forEach((wr, i) => {
+        const x = padX + i * xStep;
+        const y = padY + (1 - wr) * (H - padY * 2);
+        pathD += (i === 0 ? 'M' : 'L') + `${x.toFixed(1)},${y.toFixed(1)} `;
+    });
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    line.setAttribute('d', pathD);
+    line.setAttribute('fill', 'none');
+    line.setAttribute('stroke', 'var(--accent-neon)');
+    line.setAttribute('stroke-width', '1.8');
+    line.setAttribute('stroke-linejoin', 'round');
+    svg.appendChild(line);
+
+    // ドット（転換点）
+    wrList.forEach((wr, i) => {
+        if (i % Math.max(1, Math.floor(n / 12)) !== 0 && i !== n - 1) return;
+        const x = padX + i * xStep;
+        const y = padY + (1 - wr) * (H - padY * 2);
+        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('cx', x.toFixed(1));
+        dot.setAttribute('cy', y.toFixed(1));
+        dot.setAttribute('r', '2.5');
+        dot.setAttribute('fill', wr > 0.5 ? 'var(--accent-green)' : 'var(--accent-red)');
+        svg.appendChild(dot);
+    });
+
+    // 始点・終点ラベル
+    const startWr = Math.round(wrList[0] * 100);
+    const endWr   = Math.round(wrList[n-1] * 100);
+    const addLabel = (x, y, text, anchor) => {
+        const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        t.setAttribute('x', x); t.setAttribute('y', y);
+        t.setAttribute('fill', '#64748b'); t.setAttribute('font-size', '9');
+        t.setAttribute('font-family', 'JetBrains Mono');
+        t.setAttribute('text-anchor', anchor);
+        t.textContent = text;
+        svg.appendChild(t);
+    };
+    addLabel(padX, H - 2, `${startWr}%`, 'start');
+    addLabel(W - padX, H - 2, `${endWr}%`, 'end');
+}
+
+function buildMoveTable(humanMoves) {
+    const tbody = document.getElementById('move-table-body');
+    tbody.innerHTML = '';
+    humanMoves.forEach((m, i) => {
+        const row = document.createElement('div');
+        const shift = m.evalShift || 0;
+        const grade = gradeMove(shift);
+        const isBlunder = grade.label === 'BLUNDER';
+        const isGood    = grade.label === 'BEST' || grade.label === 'GOOD';
+        row.className = `move-row ${isBlunder ? 'blunder' : isGood ? 'good' : ''}`;
+
+        const shiftStr = shift >= 0 ? `+${Math.round(shift/100)/10}k` : `${Math.round(shift/100)/10}k`;
+        const badgeLabel = m.isBook ? 'BOOK' : grade.label;
+        const badgeCls   = m.isBook ? 'badge-book' : grade.cls;
+
+        row.innerHTML = `
+            <span style="color:#334155">${i+1}</span>
+            <span style="color:var(--accent-neon)">${moveLabel(m.r, m.c)}</span>
+            <span style="color:#64748b">${m.player === humanColor ? 'YOU' : 'BOT'}</span>
+            <span style="color:${shift >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${shiftStr}</span>
+            <span><span class="move-badge ${badgeCls}">${badgeLabel}</span></span>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function generateComment(stats, winner, humanColor) {
+    const {accuracy, blunders, mistakes, bestMoves, totalHuman, cornersCaptured, avgEvalShift} = stats;
+    const won = (winner === humanColor);
+    const drew = (winner === null);
+
+    let lines = [];
+
+    if (won) lines.push(`<strong>勝利おめでとうございます！</strong>`);
+    else if (drew) lines.push(`<strong>引き分けです。</strong>`);
+    else lines.push(`<strong>今回はSUNNYBOTの勝利です。</strong>`);
+
+    if (accuracy >= 85) lines.push(`精度 <strong>${accuracy}%</strong> — 非常に正確なプレイでした。`);
+    else if (accuracy >= 65) lines.push(`精度 <strong>${accuracy}%</strong> — 堅実な内容でしたが、まだ改善の余地があります。`);
+    else lines.push(`精度 <strong>${accuracy}%</strong> — いくつかの重要な局面で最善手を逃しました。`);
+
+    if (blunders > 2) lines.push(`<strong>${blunders}回</strong>のブランダー（大きな悪手）が結果に影響しました。`);
+    else if (blunders === 0) lines.push(`ブランダーなし — 安定したゲーム運びでした。`);
+
+    if (bestMoves >= Math.floor(totalHuman * 0.4)) lines.push(`全${totalHuman}手中 <strong>${bestMoves}手</strong>が最善手評価です。`);
+
+    if (cornersCaptured >= 3) lines.push(`コーナー取得 <strong>${cornersCaptured}/4</strong> — コーナー戦略が光りました。`);
+    else if (cornersCaptured === 0 && !won) lines.push(`コーナーを一度も取れませんでした。次回はコーナー争奪を意識してみましょう。`);
+
+    lines.push(`このゲームの結果はSUNNYBOTの学習データとしてFirebaseに送信されました。`);
+
+    return lines.join('<br>');
+}
+
+async function showAnalysis(blackScore, whiteScore, winner) {
+    if (isAiVsAiMode) return; // AUTO EVOモードでは非表示
+
+    const modal = document.getElementById('analysis-modal');
+    const banner = document.getElementById('analysis-result-banner');
+
+    // ── 結果バナー ──
+    if (winner === humanColor) {
+        banner.textContent = '🏆 YOU WIN';
+        banner.style.background = 'rgba(34,197,94,0.12)';
+        banner.style.border = '1px solid rgba(34,197,94,0.3)';
+        banner.style.color = 'var(--accent-green)';
+    } else if (winner === null) {
+        banner.textContent = '⚖ DRAW';
+        banner.style.background = 'rgba(100,116,139,0.12)';
+        banner.style.border = '1px solid rgba(100,116,139,0.3)';
+        banner.style.color = '#94a3b8';
+    } else {
+        banner.textContent = '💀 SUNNYBOT WINS';
+        banner.style.background = 'rgba(239,68,68,0.10)';
+        banner.style.border = '1px solid rgba(239,68,68,0.25)';
+        banner.style.color = 'var(--accent-red)';
+    }
+
+    // ── 評価値履歴を全手順から構築 ──
+    const evalHistory = [];
+    const humanMoveAnalysis = [];
+    let lastEval = 0;
+    let blunders = 0, mistakes = 0, bestMoves = 0;
+    let cornersCaptured = 0;
+    const humanMoveCount = gameHistory.filter(m => m.player === humanColor).length;
+
+    gameHistory.forEach((step, idx) => {
+        const ev = step.evalBefore ?? lastEval;
+        evalHistory.push(ev);
+        lastEval = ev;
+
+        if (step.player === humanColor) {
+            // 手を打った後の評価値 = 次の手の evalBefore（なければ最後の評価）
+            const nextEv = gameHistory[idx+1]?.evalBefore ?? lastEval;
+            // PlayerはBLACKが多いので正規化
+            const evBefore = humanColor === WHITE ? ev : -ev;
+            const evAfter  = humanColor === WHITE ? nextEv : -nextEv;
+            const shift = evAfter - evBefore; // 正→改善、負→悪化
+
+            if (shift <= -5000) blunders++;
+            else if (shift <= -2000) mistakes++;
+            else if (shift >= 1000) bestMoves++;
+
+            if (CORNERS.some(p=>p[0]===step.r&&p[1]===step.c)) cornersCaptured++;
+
+            humanMoveAnalysis.push({
+                ...step,
+                evalShift: shift,
+                isBook: step.phase === undefined // bookからの手
+            });
+        }
+    });
+
+    // ── 精度計算（ブランダー・ミスをペナルティとして換算）──
+    const totalHuman = humanMoveAnalysis.length || 1;
+    const accuracy = Math.max(0, Math.round(100 - (blunders * 20 + mistakes * 8) / totalHuman * 10));
+
+    // ── 統計表示 ──
+    document.getElementById('stat-accuracy').textContent  = `${Math.min(accuracy,100)}%`;
+    document.getElementById('stat-blunders').textContent  = blunders;
+    document.getElementById('stat-best-moves').textContent = bestMoves;
+
+    // ── グラフ ──
+    renderWinRateChart(evalHistory, humanColor);
+
+    // ── 手ごとのテーブル ──
+    buildMoveTable(humanMoveAnalysis);
+
+    // ── 総評 ──
+    const avgShift = humanMoveAnalysis.length
+        ? humanMoveAnalysis.reduce((s,m) => s + (m.evalShift||0), 0) / humanMoveAnalysis.length
+        : 0;
+    const stats = { accuracy: Math.min(accuracy,100), blunders, mistakes, bestMoves, totalHuman, cornersCaptured, avgEvalShift: avgShift };
+    document.getElementById('analysis-comment').innerHTML = generateComment(stats, winner, humanColor);
+
+    // ── モーダルを表示 ──
+    modal.classList.add('active');
+}
+
+function closeAnalysis() {
+    document.getElementById('analysis-modal').classList.remove('active');
+}
+
 // ═══════════════════════════════════════════════
 //  END GAME
 // ═══════════════════════════════════════════════
@@ -2507,7 +3031,12 @@ async function endGame(black, white) {
     pushCodeLog('terminal', customLog);
     updatePVDisplay(null, 0);
 
-    if (isAiVsAiMode) setTimeout(() => resetGame(), 100);
+    if (isAiVsAiMode) {
+        setTimeout(() => resetGame(), 100);
+    } else {
+        // 少し間を置いてから分析モーダルを表示
+        setTimeout(() => showAnalysis(black, white, winner), 800);
+    }
 }
 
 // ═══════════════════════════════════════════════
@@ -2595,6 +3124,7 @@ window.toggleHeatmap          = toggleHeatmap;
 window.switchMonitorTab       = switchMonitorTab;
 window.navigateHistory        = navigateHistory;
 window.handleCellClick        = handleCellClick;
+window.closeAnalysis          = closeAnalysis;
 window.onload                 = initGame;
 </script>
 </body>
