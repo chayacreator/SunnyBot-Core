@@ -1,11 +1,8 @@
 <!DOCTYPE html>
-<html lang="en" translate="no">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <!-- Block all browser/Google auto-translation -->
-    <meta name="google" content="notranslate">
-    <meta http-equiv="Content-Language" content="en">
     <title>SUNNYBOT GRANDMASTER CORE v3.5 - ENGINE MODE</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -974,97 +971,11 @@
             .move-row { font-size: 0.58rem; grid-template-columns: 28px 44px 50px 1fr 54px; }
         }
 
-        /* ═══════════════════════════════════════════════
-           WARNING / DISCLAIMER SCREEN
-        ═══════════════════════════════════════════════ */
-        /* ═══════════════════════════════════════════════
-           WARNING SCREEN  (auto-dismiss, no button)
-        ═══════════════════════════════════════════════ */
-        #warning-screen {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            z-index: 99999;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            pointer-events: none;
-        }
-        #warning-inner {
-            position: relative;
-            z-index: 2;
-            max-width: 560px;
-            width: 88%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0;
-            text-align: center;
-        }
-        #warning-logo {
-            font-family: 'Orbitron', monospace;
-            font-size: clamp(0.9rem, 3vw, 1.4rem);
-            font-weight: 900;
-            color: #fff;
-            letter-spacing: 0.18em;
-            margin-bottom: 32px;
-            opacity: 0;
-            animation: warnFadeIn 0.8s 0.2s ease forwards;
-        }
-        #warning-logo span { color: #00f2fe; }
-        #warning-notice-title {
-            font-size: clamp(0.72rem, 2vw, 0.88rem);
-            font-weight: 700;
-            color: #facc15;
-            letter-spacing: 0.18em;
-            margin-bottom: 20px;
-            opacity: 0;
-            animation: warnFadeIn 0.6s 0.8s ease forwards;
-        }
-        .warn-item {
-            font-size: clamp(0.6rem, 1.7vw, 0.72rem);
-            color: rgba(255,255,255,0.78);
-            line-height: 1.7;
-            letter-spacing: 0.03em;
-            padding: 5px 0;
-            opacity: 0;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-        .warn-item:last-child { border-bottom: none; }
-        .warn-item.wi-in { animation: warnItemIn 0.5s ease forwards; }
-        #warning-screen.ws-out { animation: warnScreenOut 1s ease forwards; }
-        @keyframes warnFadeIn  { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes warnItemIn  {
-            from { opacity: 0; transform: translateY(8px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes warnScreenOut {
-            0%   { opacity: 1; }
-            70%  { opacity: 1; }
-            100% { opacity: 0; }
-        }
-
     </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════
-     WARNING SCREEN  (auto-dismiss)
-═══════════════════════════════════════════════ -->
-<div id="warning-screen">
-    <div id="warning-inner">
-        <div id="warning-logo">SUNNYBOT <span>GRANDMASTER</span> CORE</div>
-        <div id="warning-notice-title">【重要なお知らせ】</div>
-        <div class="warn-item" id="wi0">・13歳未満の方は保護者の同意を得た上でプレイしてください。</div>
-        <div class="warn-item" id="wi1">・長時間の連続プレイは避け、適度に休憩を取ってください。</div>
-        <div class="warn-item" id="wi2">・不具合や予期しない動作が発生する場合があります。</div>
-        <div class="warn-item" id="wi3">・AI学習および性能向上のため、匿名の対局データが利用される場合があります。</div>
-        <div class="warn-item" id="wi4">・本ゲームを利用した時点で利用規約に同意したものとみなされます。</div>
-    </div>
-</div>
-<!-- END WARNING SCREEN -->
+<div id="input-shield"></div>
 
 <!-- TURN ORDER OVERLAY -->
 <div id="coin-flip-overlay">
@@ -1978,11 +1889,7 @@ function queryOpeningBook(history) {
     const ab = localSunnyBotData.autoBook;
     const abs = localSunnyBotData.autoBookStats;
     if (ab[key]) {
-        // BUG-3 fix: autoBook entries may be [r,c] arrays (recordBookOutcome)
-        // or {r,c,...} objects (endGame promotion). Normalize to [r,c] before use.
-        const entry = ab[key];
-        const r = Array.isArray(entry) ? entry[0] : entry.r;
-        const c = Array.isArray(entry) ? entry[1] : entry.c;
+        const [r, c] = ab[key];
         const stats = abs[key] || { wins: 0, total: 1 };
         const winRate = stats.wins / stats.total;
         if (winRate >= 0.55 && stats.total >= 3) {
@@ -2316,7 +2223,7 @@ function updateDisplay() {
         if (getLegalMoves(board, opponent).length === 0) {
             // Both players have no moves — end the game
             endGame(blackCount, whiteCount);
-            return;
+            return true;
         } else {
             // Current player must pass — hand over to opponent
             const passDelay = isAiVsAiMode ? 1 : 150;
@@ -2333,7 +2240,7 @@ function updateDisplay() {
                     updateDisplay();
                 }
             }, passDelay);
-            return;
+            return true;
         }
     }
 
@@ -2343,7 +2250,6 @@ function updateDisplay() {
         if (!isAiVsAiMode) {
             messageBoxEl.innerHTML = `YOUR TURN [${legalMoves.length} moves] | X-RATE:${(xRate*100).toFixed(0)}% OPEN:${openBias}`;
             shieldEl.style.display = 'none';
-            // BUG-2 fix: r, c are not in scope here; log only the context available.
             pushCodeLog('humanMove', null, {
                 legalMoves,
                 stoneCount: board.flat().filter(x=>x!==EMPTY).length
@@ -2530,16 +2436,11 @@ function applyAiMove(move, stoneCount) {
     executeMoveInPlace(board, move.r, move.c, move.flips, currentTurn);
 
     currentTurn = currentTurn === WHITE ? BLACK : WHITE;
-    // updateDisplay() handles pass detection and schedules runAiRoutine() internally.
-    // Do NOT call runAiRoutine() here — it would cause double-invocation on pass turns.
-    updateDisplay();
-    if (!isAiVsAiMode && currentTurn === humanColor) {
-        // Human's turn: nothing more to do here; updateDisplay already set up the timer.
-        return;
-    }
-    // AI turn (non-pass): schedule via setTimeout to keep stack shallow.
-    if (getLegalMoves(board, currentTurn).length > 0) {
-        setTimeout(runAiRoutine, 1);
+    const passOrEnd = updateDisplay();
+    // updateDisplay() がパス/終局を検出した場合は自身でrunAiRoutine()を管理するため、ここでは呼ばない
+    if (!passOrEnd) {
+        if (isAiVsAiMode) runAiRoutine();
+        else if (currentTurn !== humanColor) runAiRoutine();
     }
 }
 
@@ -2677,9 +2578,8 @@ function alphaBeta(depth, alpha, beta, isMaximizing, searchDepthLevel, pvOut, is
     }
     if (ttEntry && ttEntry.depth >= depth) {
         if (ttEntry.flag === TT_EXACT) return ttEntry.score;
-        // BUG-8 fix: return the stored bound value, not the current window boundary.
         if (ttEntry.flag === TT_ALPHA && ttEntry.score <= alpha) return ttEntry.score;
-        if (ttEntry.flag === TT_BETA  && ttEntry.score >= beta)  return ttEntry.score;
+        if (ttEntry.flag === TT_BETA && ttEntry.score >= beta) return ttEntry.score;
     }
 
     if (depth === 0) {
@@ -2704,7 +2604,6 @@ function alphaBeta(depth, alpha, beta, isMaximizing, searchDepthLevel, pvOut, is
             if (isEndgameSolver) return (w - b) * 1000000;
             return w > b ? 5000000 + w : -5000000 - b;
         }
-        // BUG-7 fix: a pass does not place a stone, so depth must not be decremented.
         return alphaBeta(depth, alpha, beta, !isMaximizing, searchDepthLevel, pvOut, isEndgameSolver);
     }
 
@@ -3346,10 +3245,7 @@ async function endGame(black, white) {
             if (bs.total >= 3 && bs.winRate >= 80 && !localSunnyBotData.autoBook[bookKey]) {
                 const nextMove = aiMoves[4] ?? aiMoves[aiMoves.length - 1];
                 if (nextMove) {
-                    localSunnyBotData.autoBook[bookKey] = {
-                        r: nextMove.r, c: nextMove.c,
-                        source: 'LEARNED', winRate: bs.winRate
-                    };
+                    localSunnyBotData.autoBook[bookKey] = [nextMove.r, nextMove.c];
                 }
             }
         }
@@ -3491,15 +3387,7 @@ async function initGame() {
     }
 }
 
-function resetGame() {
-    // BUG-12 fix: unsubscribe the totalGames realtime listener before re-initializing,
-    // so repeated resets don't accumulate Firebase listeners.
-    if (_totalGamesUnsubscribe) {
-        _totalGamesUnsubscribe();
-        _totalGamesUnsubscribe = null;
-    }
-    initGame();
-}
+function resetGame() { initGame(); }
 
 // AUTO EVO 並列進化インターバル
 let _parallelEvoInterval = null;
@@ -3553,32 +3441,6 @@ function toggleAutoEvolutionMode() {
 initGame();
 
 // ═══════════════════════════════════════════════
-//  WARNING SCREEN  (auto-dismiss → coin flip)
-// ═══════════════════════════════════════════════
-(function initWarningScreen() {
-    const screen = document.getElementById('warning-screen');
-    if (!screen) return;
-
-    // Stagger each item in
-    // logo fades via CSS (0.2s delay), title at 0.8s
-    // items start at 1.3s, 0.35s apart
-    const items = screen.querySelectorAll('.warn-item');
-    items.forEach((el, i) => {
-        setTimeout(() => el.classList.add('wi-in'), (1300 + i * 350));
-    });
-
-    // Last item finishes ~1300 + 4*350 = 2700ms
-    // Hold for ~1000ms, then fade screen out over 1s
-    const holdDelay = 1300 + (items.length - 1) * 350 + 1000;
-    setTimeout(() => {
-        screen.classList.add('ws-out');
-        screen.addEventListener('animationend', () => {
-            screen.style.display = 'none';
-        }, { once: true });
-    }, holdDelay);
-})();
-
-// ═══════════════════════════════════════════════
 //  GLOBAL EXPOSURE (type="module" 対策)
 // ═══════════════════════════════════════════════
 window.resetGame              = resetGame;
@@ -3588,9 +3450,7 @@ window.switchMonitorTab       = switchMonitorTab;
 window.navigateHistory        = navigateHistory;
 window.handleCellClick        = handleCellClick;
 window.closeAnalysis          = closeAnalysis;
-// BUG-11 fix: initGame() was already called explicitly above.
-// Setting window.onload here would cause a second initialization after page load.
-// window.onload = initGame;  // REMOVED
+window.onload                 = initGame;
 </script>
 </body>
 </html>
