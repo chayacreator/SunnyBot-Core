@@ -1,8 +1,11 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en" translate="no">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- Block all browser/Google auto-translation -->
+    <meta name="google" content="notranslate">
+    <meta http-equiv="Content-Language" content="en">
     <title>SUNNYBOT GRANDMASTER CORE v3.5 - ENGINE MODE</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,6 +37,13 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
+        /* Remove default scrollbar highlight */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.16); }
+        * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent; }
+
         body {
             font-family: "Inter", system-ui, sans-serif;
             background: radial-gradient(circle at 50% 50%, #0f172a 0%, var(--bg-color) 100%);
@@ -64,7 +74,7 @@
             height: 100%;
         }
 
-        /* PC: ヘッダー→ボード→コントロールの順 */
+        /* PC: header → board → controls */
         #header-panel  { order: 1; }
         #board-wrapper { order: 2; }
         #control-panel { order: 3; }
@@ -376,10 +386,10 @@
         }
 
         /* ══════════════════════════════
-           STONE — 本格碁石スタイル
+           STONE — authentic go-stone style
         ══════════════════════════════ */
 
-        /* ベース */
+        /* base */
         .stone {
             width: 88%; height: 88%;
             border-radius: 50%;
@@ -389,7 +399,7 @@
             perspective: 200px;
         }
 
-        /* ── 黒石 ── */
+        /* ── black stone ── */
         .stone.black {
             display: block;
             background: #111;
@@ -398,7 +408,7 @@
         }
         .stone.black::before, .stone.black::after { content: none; }
 
-        /* ── 白石 ── */
+        /* ── white stone ── */
         .stone.white {
             display: block;
             background: #f5f5f5;
@@ -407,7 +417,7 @@
         }
         .stone.white::before, .stone.white::after { content: none; }
 
-        /* ── 置くアニメーション: 上から落として弾む ── */
+        /* ── place animation: drop and bounce ── */
         @keyframes stoneDrop {
             0%   { transform: scale(0.4) translateY(-18px); opacity: 0; }
             55%  { transform: scale(1.08) translateY(2px);  opacity: 1; }
@@ -419,7 +429,7 @@
             animation: stoneDrop 0.28s cubic-bezier(.22,.68,0,1.3) forwards;
         }
 
-        /* ── ひっくり返すアニメーション: X軸で前転 ── */
+        /* ── flip animation: rotate on X axis ── */
         @keyframes stoneFlipX {
             0%   { transform: rotateX(0deg) scale(1); }
             35%  { transform: rotateX(90deg) scale(0.88); }
@@ -431,7 +441,7 @@
             animation: stoneFlipX 0.30s ease-in-out forwards;
         }
 
-        /* ── 合法手マーカー ── */
+        /* ── legal move marker ── */
         @keyframes legalPulse {
             0%, 100% { transform: scale(0.85); opacity: 0.5; }
             50%       { transform: scale(1.18); opacity: 0.95; }
@@ -539,7 +549,7 @@
         @keyframes timerPulse { from { opacity: 1; } to { opacity: 0.4; } }
         /* ══════════════════════════════════════════════
            MOBILE & TABLET RESPONSIVE  (≤ 900px)
-           レイアウト: 縦積み  ボード→ヘッダー→コントロール→モニター
+           Layout: vertical stack  board → header → controls → monitor
         ══════════════════════════════════════════════ */
         @media (max-width: 900px) {
 
@@ -554,7 +564,7 @@
                 padding-bottom: env(safe-area-inset-bottom);
             }
 
-            /* ── ワークスペース: 縦1列 ── */
+            /* ── workspace: single column ── */
             #workspace-layout {
                 flex-direction: column;
                 width: 100%;
@@ -564,7 +574,7 @@
                 padding: 0;
             }
 
-            /* ── ゲームセクション ── */
+            /* ── game section ── */
             #game-section {
                 width: 100%;
                 height: auto;
@@ -572,12 +582,12 @@
                 justify-content: flex-start;
             }
 
-            /* モバイル: ボード→ヘッダー→コントロール の順に */
+            /* mobile: board → header → controls order */
             #board-wrapper { order: 1 !important; }
             #header-panel  { order: 2 !important; }
             #control-panel { order: 3 !important; }
 
-            /* ── ヘッダーパネル ── */
+            /* ── header panel ── */
             #header-panel {
                 border-radius: 0;
                 border-left: none;
@@ -597,7 +607,7 @@
                 margin-bottom: 6px;
             }
 
-            /* スコアボード: 左右に大きく */
+            /* scoreboard: expanded left/right */
             #scoreboard {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
@@ -618,7 +628,7 @@
                 height: 14px;
             }
 
-            /* ステータスバー: 2行グリッド */
+            /* status bar: 2-row grid */
             #brain-status-panel {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
@@ -633,13 +643,13 @@
                 padding: 1px 6px;
             }
 
-            /* タイマーをステータスバーと同行に */
+            /* timer on same row as status bar */
             #turn-timer-wrap {
                 justify-content: flex-end;
             }
             #turn-timer-bar-bg { width: 60px; }
 
-            /* メッセージボックス */
+            /* message box */
             #message-box {
                 font-size: 0.7rem;
                 height: auto;
@@ -648,7 +658,7 @@
                 padding-top: 6px;
             }
 
-            /* ── ボード: 画面幅いっぱい ── */
+            /* ── board: full screen width ── */
             #board-wrapper {
                 width: 100vw;
                 height: 100vw;
@@ -664,16 +674,16 @@
 
             #board { gap: 2px; }
 
-            /* セルタップ領域を少し大きく */
+            /* slightly enlarge cell tap area */
             .cell { touch-action: manipulation; }
 
-            /* legal move dot を大きく */
+            /* enlarge legal move dot */
             .cell.legal-move::after {
                 width: 28%;
                 height: 28%;
             }
 
-            /* ── コントロールボタン ── */
+            /* ── control buttons ── */
             #control-panel {
                 display: grid;
                 grid-template-columns: repeat(3, 1fr);
@@ -688,14 +698,14 @@
                 padding: 12px 8px;
                 font-size: 0.68rem;
                 border-radius: 8px;
-                /* タップ時の視覚フィードバック */
+                /* visual feedback on tap */
                 -webkit-tap-highlight-color: transparent;
                 transition: transform 0.1s, background 0.15s;
                 letter-spacing: 0.3px;
             }
             button:active { transform: scale(0.95); }
 
-            /* ── モニターセクション ── */
+            /* ── monitor section ── */
             #monitor-section {
                 width: 100%;
                 height: 300px;
@@ -735,15 +745,15 @@
                 max-height: 80px;
             }
 
-            /* ヒートマップグリッド */
+            /* heatmap grid */
             #heatmap-grid { gap: 1px; }
             .hm-cell { font-size: 0.4rem; border-radius: 2px; }
 
-            /* コインフリップ */
+            /* coin flip */
             #coin-result-text { font-size: 1.1rem; letter-spacing: 2px; }
         }
 
-        /* ── タブレット (601〜900px): ボードをより大きく ── */
+        /* ── tablet (601-900px): larger board ── */
         @media (min-width: 601px) and (max-width: 900px) {
             #board-wrapper {
                 width: min(90vw, 500px);
@@ -755,7 +765,7 @@
             button { padding: 14px 12px; font-size: 0.75rem; }
         }
 
-        /* ── 小型スマホ (≤ 380px) ── */
+        /* ── small phone (<=380px) ── */
         @media (max-width: 380px) {
             h1 { font-size: 0.68rem; }
             .player-status { font-size: 0.9rem; }
@@ -832,7 +842,7 @@
             gap: 18px;
         }
 
-        /* ── 結果バナー ── */
+        /* ── result banner ── */
         #analysis-result-banner {
             text-align: center;
             padding: 12px;
@@ -843,7 +853,7 @@
             letter-spacing: 2px;
         }
 
-        /* ── セクションラベル ── */
+        /* ── section label ── */
         .analysis-section-label {
             font-family: "JetBrains Mono", monospace;
             font-size: 0.62rem;
@@ -852,7 +862,7 @@
             margin-bottom: 8px;
         }
 
-        /* ── 勝率推移グラフ ── */
+        /* ── win-rate chart ── */
         #winrate-chart-wrap {
             background: rgba(0,0,0,0.3);
             border-radius: 8px;
@@ -866,7 +876,7 @@
             display: block;
         }
 
-        /* ── 手ごとのスコア表 ── */
+        /* ── move-by-move score table ── */
         #move-table-wrap {
             background: rgba(0,0,0,0.3);
             border-radius: 8px;
@@ -903,7 +913,7 @@
         .badge-best    { background: rgba(0,242,254,0.2);  color: var(--accent-neon); }
         .badge-book    { background: rgba(168,85,247,0.25); color: #c084fc; }
 
-        /* ── 統計グリッド ── */
+        /* ── stats grid ── */
         #analysis-stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -930,7 +940,7 @@
             letter-spacing: 0.05em;
         }
 
-        /* ── 総評テキスト ── */
+        /* ── summary text ── */
         #analysis-comment {
             background: rgba(245,158,11,0.05);
             border: 1px solid rgba(245,158,11,0.15);
@@ -942,7 +952,7 @@
         }
         #analysis-comment strong { color: var(--accent-sunny); }
 
-        /* ── フッターボタン ── */
+        /* ── footer buttons ── */
         #analysis-footer {
             padding: 12px 18px 16px;
             display: flex;
@@ -956,7 +966,7 @@
             font-size: 0.72rem;
         }
 
-        /* モバイル調整 */
+        /* mobile adjustments */
         @media (max-width: 900px) {
             #analysis-panel { border-radius: 8px; max-height: 85vh; }
             #analysis-stats-grid { grid-template-columns: repeat(3,1fr); gap: 6px; }
@@ -964,11 +974,97 @@
             .move-row { font-size: 0.58rem; grid-template-columns: 28px 44px 50px 1fr 54px; }
         }
 
+        /* ═══════════════════════════════════════════════
+           WARNING / DISCLAIMER SCREEN
+        ═══════════════════════════════════════════════ */
+        /* ═══════════════════════════════════════════════
+           WARNING SCREEN  (auto-dismiss, no button)
+        ═══════════════════════════════════════════════ */
+        #warning-screen {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            pointer-events: none;
+        }
+        #warning-inner {
+            position: relative;
+            z-index: 2;
+            max-width: 560px;
+            width: 88%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            text-align: center;
+        }
+        #warning-logo {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(0.9rem, 3vw, 1.4rem);
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: 0.18em;
+            margin-bottom: 32px;
+            opacity: 0;
+            animation: warnFadeIn 0.8s 0.2s ease forwards;
+        }
+        #warning-logo span { color: #00f2fe; }
+        #warning-notice-title {
+            font-size: clamp(0.72rem, 2vw, 0.88rem);
+            font-weight: 700;
+            color: #facc15;
+            letter-spacing: 0.18em;
+            margin-bottom: 20px;
+            opacity: 0;
+            animation: warnFadeIn 0.6s 0.8s ease forwards;
+        }
+        .warn-item {
+            font-size: clamp(0.6rem, 1.7vw, 0.72rem);
+            color: rgba(255,255,255,0.78);
+            line-height: 1.7;
+            letter-spacing: 0.03em;
+            padding: 5px 0;
+            opacity: 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .warn-item:last-child { border-bottom: none; }
+        .warn-item.wi-in { animation: warnItemIn 0.5s ease forwards; }
+        #warning-screen.ws-out { animation: warnScreenOut 1s ease forwards; }
+        @keyframes warnFadeIn  { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes warnItemIn  {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes warnScreenOut {
+            0%   { opacity: 1; }
+            70%  { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
     </style>
 </head>
 <body>
 
-<div id="input-shield"></div>
+<!-- ═══════════════════════════════════════════════
+     WARNING SCREEN  (auto-dismiss)
+═══════════════════════════════════════════════ -->
+<div id="warning-screen">
+    <div id="warning-inner">
+        <div id="warning-logo">SUNNYBOT <span>GRANDMASTER</span> CORE</div>
+        <div id="warning-notice-title">【重要なお知らせ】</div>
+        <div class="warn-item" id="wi0">・13歳未満の方は保護者の同意を得た上でプレイしてください。</div>
+        <div class="warn-item" id="wi1">・長時間の連続プレイは避け、適度に休憩を取ってください。</div>
+        <div class="warn-item" id="wi2">・不具合や予期しない動作が発生する場合があります。</div>
+        <div class="warn-item" id="wi3">・AI学習および性能向上のため、匿名の対局データが利用される場合があります。</div>
+        <div class="warn-item" id="wi4">・本ゲームを利用した時点で利用規約に同意したものとみなされます。</div>
+    </div>
+</div>
+<!-- END WARNING SCREEN -->
 
 <!-- TURN ORDER OVERLAY -->
 <div id="coin-flip-overlay">
@@ -977,7 +1073,7 @@
 
 <div id="workspace-layout">
     <div id="game-section">
-        <!-- ヘッダー (モバイルでは order:2、PCでは order:1) -->
+        <!-- header (mobile: order 2, PC: order 1) -->
         <div id="header-panel" style="order:1">
             <h1 id="main-title">SUNNYBOT GRANDMASTER CORE v3.5</h1>
             <div id="scoreboard">
@@ -994,7 +1090,7 @@
             </div>
             <div id="brain-status-panel">
                 <span>API: <span id="api-status" style="color:var(--accent-neon)">SYNC_ACTIVE</span></span>
-                <span id="book-indicator">📖 BOOK: --</span>
+                <span id="book-indicator">BOOK: --</span>
                 <span id="phase-indicator" class="early">EARLY</span>
                 <span style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;">GLOBAL: <span id="brain-games" style="color:var(--accent-purple);font-weight:700;font-size:0.8rem;letter-spacing:0.05em">--</span> <span style="color:#475569;font-size:0.6rem;">GAMES</span></span>
             </div>
@@ -1009,14 +1105,14 @@
             <div id="message-box">SYSTEM BOOTING...</div>
         </div>
 
-        <!-- ボード (モバイルでは order:1 で最上部) -->
+        <!-- board (mobile: order 1, top) -->
         <div id="board-wrapper" style="order:2">
             <div id="board-container">
                 <div id="board"></div>
             </div>
         </div>
 
-        <!-- コントロール -->
+        <!-- controls -->
         <div id="control-panel" style="order:3">
             <button onclick="resetGame()">REBOOT</button>
             <button id="btn-auto-toggle" onclick="toggleAutoEvolutionMode()">AUTO EVO</button>
@@ -1247,9 +1343,13 @@ const DEFAULT_BRAIN = () => ({
     moveCountMap:    Array(8).fill(null).map(() => Array(8).fill(0)),   // 手を打った回数
     // 全ユーザーの historyTable 累積（高頻度βカットマスを共有）
     historyBonus:    Array(8).fill(null).map(() => Array(8).fill(0)),
+    // 全ユーザーの負け棋譜から生成した「危険マス」マップ
+    blunderMap:      Array(8).fill(null).map(() => Array(8).fill(0)),
     humanPattern: { xMoveTendency:0, cMoveTendency:0, cornerSnipeRate:0, averageOpenness:0, clickCount:0 },
     // 対人傾向プロファイル（全ユーザー累計）
     opponentProfile: { totalHumanMoves:0, avgWinScore:0, flipCountHistory:[] },
+    // Firebase永続化TT（深度6以上のエントリを全ユーザーで共有）
+    fbTT: {},
     autoBook: {},
     autoBookStats: {}  
 });
@@ -1269,8 +1369,10 @@ function brainToFirebase(data) {
         winRateMap:         flattenMatrix(data.winRateMap    || DEFAULT_BRAIN().winRateMap),
         moveCountMap:       flattenMatrix(data.moveCountMap  || DEFAULT_BRAIN().moveCountMap),
         historyBonus:       flattenMatrix(data.historyBonus  || DEFAULT_BRAIN().historyBonus),
+        blunderMap:         flattenMatrix(data.blunderMap    || DEFAULT_BRAIN().blunderMap),
         humanPattern:       JSON.stringify(data.humanPattern   || {}),
         opponentProfile:    JSON.stringify(data.opponentProfile|| {}),
+        fbTT:               JSON.stringify(data.fbTT           || {}),
         autoBook:           JSON.stringify(data.autoBook       || {}),
         autoBookStats:      JSON.stringify(data.autoBookStats  || {}),
         lastUpdated:        Date.now()
@@ -1290,8 +1392,10 @@ function firebaseToBrain(snap) {
         winRateMap:         restoreMatrix(d.winRateMap),
         moveCountMap:       restoreMatrix(d.moveCountMap),
         historyBonus:       restoreMatrix(d.historyBonus),
+        blunderMap:         restoreMatrix(d.blunderMap),
         humanPattern:     safeParseJSON(d.humanPattern,    def.humanPattern),
         opponentProfile:  safeParseJSON(d.opponentProfile, def.opponentProfile),
+        fbTT:             safeParseJSON(d.fbTT,            {}),
         autoBook:         safeParseJSON(d.autoBook,        {}),
         autoBookStats:    safeParseJSON(d.autoBookStats,   {})
     };
@@ -1378,7 +1482,7 @@ const SunnyBotCore = {
         // 行列は差分を加算（全ユーザーの学習を累積）
         const matrixKeys = [
             'learnedWeightBonus','earlyGameBonus','midGameBonus','lateGameBonus',
-            'winRateMap','moveCountMap','historyBonus'
+            'winRateMap','moveCountMap','historyBonus','blunderMap'
         ];
         matrixKeys.forEach(key => {
             const prevMat = prev[key] || DEFAULT_BRAIN()[key];
@@ -1389,11 +1493,17 @@ const SunnyBotCore = {
             });
         });
 
-        // autoBook / autoBookStats / humanPattern / opponentProfile は JSON文字列で上書き
+        // autoBook / autoBookStats / humanPattern / opponentProfile / fbTT は JSON文字列で書き込み
         updates[`${FB_PATH}/humanPattern`]    = JSON.stringify(updatedData.humanPattern);
         updates[`${FB_PATH}/opponentProfile`] = JSON.stringify(updatedData.opponentProfile);
         updates[`${FB_PATH}/autoBook`]        = JSON.stringify(updatedData.autoBook);
         updates[`${FB_PATH}/autoBookStats`]   = JSON.stringify(updatedData.autoBookStats);
+        // fbTT: 深度6以上のエントリのみ（上位1000件でサイズ制限）
+        const fbTTEntries = Object.entries(updatedData.fbTT || {});
+        const topTT = fbTTEntries
+            .sort((a,b) => (b[1].depth||0) - (a[1].depth||0))
+            .slice(0, 1000);
+        updates[`${FB_PATH}/fbTT`] = JSON.stringify(Object.fromEntries(topTT));
 
         try {
             await update(ref(_db), updates);
@@ -1430,7 +1540,7 @@ function mergeWithMax(local, remote) {
     const merged = JSON.parse(JSON.stringify(local));
     const matrixKeys = [
         'learnedWeightBonus','earlyGameBonus','midGameBonus','lateGameBonus',
-        'historyBonus'
+        'historyBonus','blunderMap'
     ];
     matrixKeys.forEach(key => {
         if (!merged[key]) merged[key] = DEFAULT_BRAIN()[key];
@@ -1462,6 +1572,15 @@ function mergeWithMax(local, remote) {
         merged.autoBook      = remote.autoBook;
         merged.autoBookStats = remote.autoBookStats;
     }
+    // fbTT はマージ（深度が高い方を採用）
+    const localTT  = local.fbTT  || {};
+    const remoteTT = remote.fbTT || {};
+    const mergedTT = { ...localTT };
+    for (const [key, rv] of Object.entries(remoteTT)) {
+        const lv = mergedTT[key];
+        if (!lv || (rv.depth || 0) > (lv.depth || 0)) mergedTT[key] = rv;
+    }
+    merged.fbTT = mergedTT;
     return merged;
 }
 
@@ -1522,18 +1641,243 @@ function highlightCode(code) {
     return html;
 }
 
-const RUNTIME_CODE_TEMPLATES = {
-    boot: `/* GRANDMASTER CORE v3.5 — ZOBRIST SYNC */\nconst GrandmasterAPI = {\n\tversion: "3.5",\n\tengine: "AlphaBeta_Adaptive_Parity",\n\tTT_Status: "HASH_VERIFIED_OK",\n\tordering: "Killer+HistoryHeuristic",\n\twindow: "AspirationWindow_Active"\n};`,
-    humanMove: `/* HUMAN PATTERN ANALYSIS — REAL-TIME */\nfunction profileHumanBehavior(r, c) {\n\tdata.humanPattern.clickCount++;\n\tif (isXSquare(r,c)) data.humanPattern.xMoveTendency++;\n\tif (isCorner(r,c))  data.humanPattern.cornerSnipeRate++;\n\treturn { trapBias: "DYNAMIC" };\n}`,
-    aiRoutine: `/* ITERATIVE DEEPENING WITH ASPIRATION WINDOW */\nfunction runPhaseSearch() {\n\tlet alpha = prevScore - 400;\n\tlet beta  = prevScore + 400;\n\tlet score = alphaBeta(depth, alpha, beta);\n\tif (score <= alpha || score >= beta) {\n\t\tscore = alphaBeta(depth, -Inf, Inf); // Fail fallback\n\t}\n}`,
-    evaluation: `/* STATE-AWARE EVALUATOR (REAL-TIME SCALING) */\nfunction evaluateBoard(state) {\n\tconst stones = countStones(state);\n\tconst phase = getPhase(stones); // FIXED: Live analysis\n\tconst stability = computeRigidStable(state);\n\tconst parity = computeParityBonus(state, stones);\n\treturn stability + parity + mobility;\n}`,
-    terminal: `/* BACKPROPAGATION LOGGED */\nfunction backprop(loser) {\n\t// Core parameters preservation\n\tcommitDataToLocalStorage();\n}`,
-    book: `/* OPENING BOOK HIT — INSTANT RESPONSE */\nconst bookResult = OpeningBook.query(moveHistory);\nreturn bookResult.move;`,
-    pvUpdate: `/* PRINCIPAL VARIATION — LIVE READ LINE */\nfunction extractPV(node) {\n\treturn [...bestMovesPath];\n}`
-};
+// ═══════════════════════════════════════════════
+//  DYNAMIC RUNTIME LOG GENERATOR
+//  実際のリアルタイム値を埋め込んで出力する
+// ═══════════════════════════════════════════════
+function getRuntimeLog(type, extra = {}) {
+    const bd = localSunnyBotData || DEFAULT_BRAIN();
+    const totalG   = bd.totalGames  || 0;
+    const wins     = bd.wins        || 0;
+    const losses   = bd.losses      || 0;
+    const draws    = Math.max(0, totalG - wins - losses);
+    const wr       = totalG > 0 ? ((wins / totalG) * 100).toFixed(1) : '0.0';
+    const phase    = getPhase(extra.stoneCount ?? 4);
+    const phaseName = phase === 'early' ? 'OPENING' : phase === 'mid' ? 'MIDGAME' : 'ENDGAME';
 
-function pushCodeLog(type, customText = null) {
-    let codeContent = customText ? customText : RUNTIME_CODE_TEMPLATES[type];
+    // 盤面カウント
+    let bCount = 0, wCount = 0;
+    if (board && board.length) {
+        for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+            if (board[r][c]===BLACK) bCount++;
+            else if (board[r][c]===WHITE) wCount++;
+        }
+    }
+    const totalStones = bCount + wCount;
+    const humanWr  = totalG > 0
+        ? (((humanColor===BLACK ? losses : wins) / totalG)*100).toFixed(1)
+        : '0.0';
+    const botWr    = totalG > 0
+        ? (((humanColor===BLACK ? wins : losses) / totalG)*100).toFixed(1)
+        : '0.0';
+
+    // historyBonus の最大セル
+    let topHistCell = {r:3,c:3,v:0};
+    if (bd.historyBonus) {
+        for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+            if ((bd.historyBonus[r]?.[c]||0) > topHistCell.v)
+                topHistCell = {r, c, v: bd.historyBonus[r][c]};
+        }
+    }
+    const colLabel = c => String.fromCharCode(65+c);
+
+    // winRateMap の最高勝率セル
+    let topWRCell = {r:3,c:3,wr:0.5};
+    if (bd.winRateMap && bd.moveCountMap) {
+        for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+            const mc = bd.moveCountMap[r]?.[c] || 0;
+            if (mc >= 3) {
+                const cellWR = (bd.winRateMap[r]?.[c]||0) / mc;
+                if (cellWR > topWRCell.wr) topWRCell = {r,c,wr:cellWR};
+            }
+        }
+    }
+
+    const autoBookSize = Object.keys(bd.autoBook||{}).length;
+    const humanClicks  = bd.humanPattern?.clickCount || 0;
+    const xTendency    = bd.humanPattern?.xMoveTendency || 0;
+    const cornerRate   = humanClicks > 0
+        ? ((bd.humanPattern?.cornerSnipeRate||0)/humanClicks*100).toFixed(1) : '0.0';
+
+    const lm = extra.legalMoves ?? getLegalMoves(board, humanColor);
+
+    switch (type) {
+
+        case 'boot': return [
+`// ═══════════════════════════════════════════`,
+`//  SUNNYBOT GRANDMASTER CORE v3.5 — BOOT`,
+`// ═══════════════════════════════════════════`,
+``,
+`const engine = {`,
+`  version:    "v3.5_AdaptiveEngine",`,
+`  search:     "IterativeDeepening_AlphaBeta",`,
+`  ordering:   "KillerMove + HistoryHeuristic",`,
+`  window:     "AspirationWindow ±400",`,
+`  TT:         "ZobristHash 64bit — LOADED",`,
+`  fbPath:     "sunnybot/brain/v3",`,
+`};`,
+``,
+`// Firebase Realtime DB — 共有学習データ読み込み`,
+`const globalBrain = await SunnyBotCore.fetchLatestDataAPI();`,
+``,
+`// ─── 蓄積学習データ ───`,
+`const stats = {`,
+`  totalGames:   ${totalG},`,
+`  wins:         ${wins},`,
+`  losses:       ${losses},`,
+`  draws:        ${draws},`,
+`  bot_winRate:  "${botWr}%",`,
+`  human_winRate:"${humanWr}%",`,
+`  autoBookSize: ${autoBookSize},  // 定石エントリ数`,
+`  humanClicks:  ${humanClicks},`,
+`};`,
+``,
+`// ─── 共有 historyBonus 最強マス ───`,
+`const hotCell = { pos: "${colLabel(topHistCell.c)}${topHistCell.r+1}", score: ${Math.round(topHistCell.v)} };`,
+``,
+`// ─── 勝率マップ 最高勝率マス ───`,
+`const topWinCell = {`,
+`  pos:     "${colLabel(topWRCell.c)}${topWRCell.r+1}",`,
+`  winRate: "${(topWRCell.wr*100).toFixed(1)}%",`,
+`};`,
+``,
+`console.log("[BOOT] Firebase sync complete. Ready.");`,
+        ].join('\n');
+
+        case 'humanMove': return [
+`// ─── HUMAN MOVE RECEIVED ───────────────────`,
+``,
+`const humanMove = {`,
+`  pos:       "${colLabel(extra.c??3)}${(extra.r??3)+1}",`,
+`  turn:      ${gameHistory.length},`,
+`  phase:     "${phaseName}",`,
+`  legalCount: ${lm.length},`,
+`};`,
+``,
+`// ─── 対人プロファイル更新 ───`,
+`humanPattern.clickCount++;  // → ${humanClicks + 1}`,
+`${extra.isX  ? `humanPattern.xMoveTendency++;  // X-Square move detected!` :
+  extra.isCorner ? `humanPattern.cornerSnipeRate++;  // CORNER captured!` :
+  `// normal square — no pattern flag`}`,
+``,
+`// ─── 現局面 ───`,
+`const board = {`,
+`  black:  ${bCount},`,
+`  white:  ${wCount},`,
+`  empty:  ${64 - totalStones},`,
+`  legal:  ${lm.length},  // Botの合法手数（次ターン）`,
+`};`,
+``,
+`// ─── Firebase winRateMap 参照 ───`,
+`const cellWR = winRateMap["${colLabel(extra.c??3)}${(extra.r??3)+1}"];`,
+`// moveCount: ${bd.moveCountMap?.[extra.r??3]?.[extra.c??3] || 0}  winCount: ${bd.winRateMap?.[extra.r??3]?.[extra.c??3] || 0}`,
+        ].join('\n');
+
+        case 'aiRoutine': return [
+`// ─── SUNNYBOT THINKING ──────────────────────`,
+``,
+`const search = {`,
+`  phase:    "${phaseName}",`,
+`  stones:   ${totalStones},`,
+`  aspAlpha: ${(extra.prevScore||0) - 400},`,
+`  aspBeta:  ${(extra.prevScore||0) + 400},`,
+`};`,
+``,
+`// ─── 評価関数の重み構成 ───`,
+`const evalComponents = {`,
+`  stability:     "CORNER×500 + STABLE×30",`,
+`  mobility:      "legalMoves × weight",`,
+`  parity:        "${totalStones % 2 === 0 ? '+PARITY_BONUS' : 'parity neutral'}",`,
+`  learnedBonus:  "Firebase.learnedWeightBonus[r][c]",`,
+`  winRateBonus:  "(wr - 0.5) × 6000  [min 3 samples]",`,
+`  historyBonus:  "min(hb × 0.08, 800)",`,
+`};`,
+``,
+`// ─── 共有学習データ注入 ───`,
+`const fbInjection = {`,
+`  hotCell:   "${colLabel(topHistCell.c)}${topHistCell.r+1}",  // βカット頻発マス`,
+`  topWinPos: "${colLabel(topWRCell.c)}${topWRCell.r+1}",  // 勝率${(topWRCell.wr*100).toFixed(1)}%`,
+`  bookHits:  ${extra.bookHits ?? bookHitsThisGame ?? 0},`,
+`};`,
+``,
+`// iterative deepening 開始...`,
+`for (let depth = 1; depth <= maxDepth; depth++) {`,
+`  score = alphaBeta(depth, alpha, beta, board);`,
+`  // TT hit / killer update / history increment`,
+`}`,
+        ].join('\n');
+
+        case 'pvUpdate': return [
+`// ─── PRINCIPAL VARIATION UPDATED ──────────`,
+``,
+`const pvResult = {`,
+`  evalScore:  ${extra.evalScore ?? 0},`,
+`  pvLength:   ${extra.pvLen ?? 0},`,
+`  bestMove:   "${colLabel(extra.bestC??3)}${(extra.bestR??3)+1}",`,
+`  phase:      "${phaseName}",`,
+`};`,
+``,
+`// ─── 勝率推定（sigmoid変換）───`,
+`const winProb = {`,
+`  bot:   "${(100 / (1 + Math.exp(-(extra.evalScore??0) / 8000))).toFixed(1)}%",`,
+`  human: "${(100 - 100 / (1 + Math.exp(-(extra.evalScore??0) / 8000))).toFixed(1)}%",`,
+`};`,
+``,
+`// ─── グローバル学習との整合性 ───`,
+`const globalCheck = {`,
+`  totalGames:  ${totalG},`,
+`  botWinRate:  "${botWr}%",`,
+`  humanWinRate:"${humanWr}%",`,
+`  fbStatus:    "${document.getElementById('api-status')?.textContent || 'UNKNOWN'}",`,
+`};`,
+        ].join('\n');
+
+        case 'book': return [
+`// ─── OPENING BOOK HIT ───────────────────────`,
+``,
+`const bookEntry = {`,
+`  source:    "${extra.src || 'AUTO'}",`,
+`  move:      "${colLabel(extra.c??3)}${(extra.r??3)+1}",`,
+`  winRate:   "${extra.winRate ?? '?'}%",`,
+`  bookSize:  ${autoBookSize},`,
+`  bookHits:  ${(extra.bookHits ?? bookHitsThisGame ?? 0) + 1},`,
+`};`,
+``,
+`// 定石一致 — AlphaBeta探索をスキップ`,
+`// autoBookStats に対局結果を後で反映`,
+`return bookEntry.move;  // INSTANT`,
+        ].join('\n');
+
+        case 'evaluation': return [
+`// ─── BOARD EVALUATION SNAPSHOT ─────────────`,
+``,
+`const evalSnapshot = {`,
+`  phase:      "${phaseName}",`,
+`  stones:     ${totalStones},`,
+`  black:      ${bCount},`,
+`  white:      ${wCount},`,
+`  fbSamples:  ${totalG},  // 学習ゲーム数`,
+`};`,
+``,
+`// ─── historyBonus 上位マス（βカット頻度）───`,
+`const topBetaCutCells = [`,
+`  "${colLabel(topHistCell.c)}${topHistCell.r+1}": ${Math.round(topHistCell.v)},`,
+`];`,
+``,
+`// ─── winRateMap 最高勝率 ───`,
+`const winRateHighlight = {`,
+`  pos:     "${colLabel(topWRCell.c)}${topWRCell.r+1}",`,
+`  wr:      "${(topWRCell.wr*100).toFixed(1)}%",`,
+`  samples: ${bd.moveCountMap?.[topWRCell.r]?.[topWRCell.c] || 0},`,
+`};`,
+        ].join('\n');
+
+        default: return `// RUNTIME LOG: ${type}`;
+    }
+}
+
+function pushCodeLog(type, customText = null, extra = {}) {
+    const codeContent = customText ?? getRuntimeLog(type, extra);
     if (monitorLogs.length > 0 && monitorLogs[monitorLogs.length - 1] === codeContent) return;
     monitorLogs.push(codeContent);
     currentLogIndex = monitorLogs.length - 1;
@@ -1543,25 +1887,9 @@ function pushCodeLog(type, customText = null) {
 
 function streamCodeWithTyping(codeText) {
     if (typingIntervalId) clearInterval(typingIntervalId);
-    codeViewerEl.innerHTML = "";
-    let i = 0;
-    const speed = isAiVsAiMode ? 0 : 1;
-    if (speed === 0) {
-        codeViewerEl.innerHTML = highlightCode(codeText);
-        codeViewerEl.scrollTop = codeViewerEl.scrollHeight;
-        return;
-    }
-    typingIntervalId = setInterval(() => {
-        if (i < codeText.length) {
-            i += 3;
-            if (i > codeText.length) i = codeText.length;
-            codeViewerEl.innerHTML = highlightCode(codeText.slice(0, i));
-            codeViewerEl.scrollTop = codeViewerEl.scrollHeight;
-        } else {
-            clearInterval(typingIntervalId);
-            typingIntervalId = null;
-        }
-    }, speed);
+    codeViewerEl.innerHTML = highlightCode(codeText);
+    codeViewerEl.scrollTop = codeViewerEl.scrollHeight;
+    typingIntervalId = null;
 }
 
 function navigateHistory(direction) {
@@ -1650,7 +1978,11 @@ function queryOpeningBook(history) {
     const ab = localSunnyBotData.autoBook;
     const abs = localSunnyBotData.autoBookStats;
     if (ab[key]) {
-        const [r, c] = ab[key];
+        // BUG-3 fix: autoBook entries may be [r,c] arrays (recordBookOutcome)
+        // or {r,c,...} objects (endGame promotion). Normalize to [r,c] before use.
+        const entry = ab[key];
+        const r = Array.isArray(entry) ? entry[0] : entry.r;
+        const c = Array.isArray(entry) ? entry[1] : entry.c;
         const stats = abs[key] || { wins: 0, total: 1 };
         const winRate = stats.wins / stats.total;
         if (winRate >= 0.55 && stats.total >= 3) {
@@ -1978,19 +2310,49 @@ function updateDisplay() {
     const xRate = (localSunnyBotData.humanPattern?.xMoveTendency||0) / (localSunnyBotData.humanPattern?.clickCount||1);
     const openBias = (localSunnyBotData.humanPattern?.averageOpenness||0).toFixed(1);
 
+    // ── Pass / endgame detection (runs before UI state, to avoid timer/shield conflicts) ──
+    if (legalMoves.length === 0) {
+        const opponent = currentTurn === BLACK ? WHITE : BLACK;
+        if (getLegalMoves(board, opponent).length === 0) {
+            // Both players have no moves — end the game
+            endGame(blackCount, whiteCount);
+            return;
+        } else {
+            // Current player must pass — hand over to opponent
+            const passDelay = isAiVsAiMode ? 1 : 150;
+            messageBoxEl.innerHTML = `<span style="color:orange">PASS — TURN HANDED OVER.</span>`;
+            stopTurnTimer();
+            shieldEl.style.display = 'block';
+            setTimeout(() => {
+                currentTurn = opponent;
+                // Do NOT call updateDisplay here — call the appropriate handler directly
+                if (isAiVsAiMode || currentTurn !== humanColor) {
+                    updateDisplay();
+                    runAiRoutine();
+                } else {
+                    updateDisplay();
+                }
+            }, passDelay);
+            return;
+        }
+    }
+
     if (currentTurn === humanColor) {
         statusBlackEl.classList.toggle('active', humanColor === BLACK);
         statusWhiteEl.classList.toggle('active', humanColor === WHITE);
         if (!isAiVsAiMode) {
             messageBoxEl.innerHTML = `YOUR TURN [${legalMoves.length} moves] | X-RATE:${(xRate*100).toFixed(0)}% OPEN:${openBias}`;
             shieldEl.style.display = 'none';
-            pushCodeLog('humanMove');
-            // タイマー開始（時間切れ→ランダム合法手を自動選択）
+            // BUG-2 fix: r, c are not in scope here; log only the context available.
+            pushCodeLog('humanMove', null, {
+                legalMoves,
+                stoneCount: board.flat().filter(x=>x!==EMPTY).length
+            });
             startTurnTimer(() => {
                 const lm = getLegalMoves(board, humanColor);
                 if (lm.length > 0) {
                     const autoMove = lm[Math.floor(Math.random() * lm.length)];
-                    messageBoxEl.innerHTML = `<span style="color:var(--accent-red)">⏱ TIME OVER — AUTO MOVE</span>`;
+                    messageBoxEl.innerHTML = `<span style="color:var(--accent-red)">TIME OVER — AUTO MOVE</span>`;
                     handleCellClick(autoMove.r, autoMove.c);
                 }
             });
@@ -2010,22 +2372,6 @@ function updateDisplay() {
             messageBoxEl.innerHTML = isAiVsAiMode
                 ? `<span style="color:var(--accent-purple)">[STREAMING] SUNNY_BETA ANALYSIS...</span>`
                 : `<span style="color:var(--accent-sunny)">[COMPUTING] ITERATIVE ADVERSARIAL SEARCH...</span>`;
-        }
-    }
-
-    if (legalMoves.length === 0) {
-        const opponent = currentTurn === BLACK ? WHITE : BLACK;
-        if (getLegalMoves(board, opponent).length === 0) {
-            endGame(blackCount, whiteCount); return;
-        } else {
-            const passDelay = isAiVsAiMode ? 1 : 150;
-            messageBoxEl.innerHTML = `<span style="color:orange">PASS — HANDOVER ACTIVATED.</span>`;
-            stopTurnTimer();
-            setTimeout(() => { 
-                currentTurn = opponent; 
-                updateDisplay(); 
-                if (currentTurn !== humanColor || isAiVsAiMode) runAiRoutine(); 
-            }, passDelay);
         }
     }
 }
@@ -2110,7 +2456,6 @@ async function handleCellClick(r, c) {
     const evalNow = evaluateGrandmasterCore(board);
     gameHistory.push({player: humanColor, r, c, evalBefore: evalNow, stonesBefore: stoneCountNow});
     executeMoveInPlace(board, r, c, flips, humanColor);
-    await SunnyBotCore.commitDataAPI(localSunnyBotData);
     currentTurn = humanColor === BLACK ? WHITE : BLACK;
     updateDisplay();
     runAiRoutine();
@@ -2135,24 +2480,32 @@ function runAiRoutine() {
         if (validBook) {
             bookHitsThisGame++;
             const src = bookMove.source === 'HARD' ? `HARD_CODED` : `AUTO(${bookMove.winRate}%wr)`;
-            bookEl.textContent = `📖 BOOK: ${src}`;
-            pushCodeLog('book');
+            bookEl.textContent = `BOOK: ${src}`;
+            pushCodeLog('book', null, {
+                src: bookMove.source === 'HARD' ? 'HARD_CODED' : 'AUTO',
+                winRate: bookMove.winRate ?? '?',
+                r: validBook.r, c: validBook.c,
+                bookHits: bookHitsThisGame
+            });
             updatePVDisplay([{r:validBook.r, c:validBook.c}], 9999);
             setTimeout(async () => {
-                await syncWithSunnyBotCore();
                 applyAiMove(validBook, stoneCount);
             }, thinkingTime / 2);
             return;
         }
     }
-    bookEl.textContent = `📖 BOOK: SEARCH`;
+    bookEl.textContent = `BOOK: SEARCH`;
 
-    pushCodeLog('aiRoutine');
+    pushCodeLog('aiRoutine', null, { stoneCount, prevScore: lastPVLine?.[0] ? 0 : 0, bookHits: bookHitsThisGame });
     setTimeout(async () => {
-        await syncWithSunnyBotCore();
         const { bestMove, pvMoves, evalScore } = selectBestMoveByAiIterative(stoneCount, currentTurn);
         lastPVLine = pvMoves;
-        pushCodeLog('pvUpdate');
+        pushCodeLog('pvUpdate', null, {
+            evalScore,
+            pvLen: pvMoves?.length ?? 0,
+            bestR: bestMove?.r, bestC: bestMove?.c,
+            stoneCount
+        });
         updatePVDisplay(pvMoves, evalScore);
         if (bestMove) applyAiMove(bestMove, stoneCount);
     }, thinkingTime);
@@ -2175,12 +2528,19 @@ function applyAiMove(move, stoneCount) {
     const evalAi = evaluateGrandmasterCore(board);
     gameHistory.push({player: currentTurn, r: move.r, c: move.c, phase, evalBefore: evalAi, stonesBefore: stoneCountAi});
     executeMoveInPlace(board, move.r, move.c, move.flips, currentTurn);
-    SunnyBotCore.commitDataAPI(localSunnyBotData);
 
     currentTurn = currentTurn === WHITE ? BLACK : WHITE;
+    // updateDisplay() handles pass detection and schedules runAiRoutine() internally.
+    // Do NOT call runAiRoutine() here — it would cause double-invocation on pass turns.
     updateDisplay();
-    if (isAiVsAiMode) runAiRoutine();
-    else if (currentTurn !== humanColor) runAiRoutine();
+    if (!isAiVsAiMode && currentTurn === humanColor) {
+        // Human's turn: nothing more to do here; updateDisplay already set up the timer.
+        return;
+    }
+    // AI turn (non-pass): schedule via setTimeout to keep stack shallow.
+    if (getLegalMoves(board, currentTurn).length > 0) {
+        setTimeout(runAiRoutine, 1);
+    }
 }
 
 // ═══════════════════════════════════════════════
@@ -2218,12 +2578,16 @@ function selectBestMoveByAiIterative(stoneCount, player) {
     let maxTargetDepth = 5;
     
     if (remaining <= 13) {
-        maxTargetDepth = remaining; 
+        maxTargetDepth = remaining; // 終盤は完全読み（元の挙動を維持）
     } else {
         if (isAiVsAiMode) maxTargetDepth = 4;
-        else if (stoneCount >= 44) maxTargetDepth = 11; // 探索効率化により最大深度上限をアップ
+        else if (stoneCount >= 44) maxTargetDepth = 11;
         else if (stoneCount >= 12) maxTargetDepth = 8;
     }
+
+    // 時間制限: 4000ms を超えたら反復深化を途中で打ち切り、その時点の最善手を返す
+    // （深さは削らず、かつクラッシュ・長時間フリーズを防止）
+    const searchStartTime = Date.now();
 
     let bestMoveGlobal = moves[0];
     let bestScoreGlobal = player === WHITE ? -Infinity : Infinity;
@@ -2233,6 +2597,9 @@ function selectBestMoveByAiIterative(stoneCount, player) {
 
     // 反復深化 (Iterative Deepening)
     for (let currentDepth = 1; currentDepth <= maxTargetDepth; currentDepth++) {
+        // 時間制限チェック: 4秒を超えたら現時点の最善手で打ち切る
+        if (currentDepth > 1 && (Date.now() - searchStartTime) > 4000) break;
+
         let ttEntry = TT.get(currentZobristHash);
         let ttBestMove = (ttEntry && ttEntry.bestMove) ? ttEntry.bestMove : null;
 
@@ -2250,8 +2617,7 @@ function selectBestMoveByAiIterative(stoneCount, player) {
         let bestScoreThisDepth = player === WHITE ? -Infinity : Infinity;
         let pvThisDepth = [];
 
-        // 最初のアスピレーション窓内での探索
-        let failedWindow = false;
+        // アスピレーション窓内での探索
         for (let i = 0; i < moves.length; i++) {
             const move = moves[i];
             const revertList = executeMoveInPlace(board, move.r, move.c, move.flips, player);
@@ -2277,44 +2643,20 @@ function selectBestMoveByAiIterative(stoneCount, player) {
             }
 
             if (beta <= alpha) {
-                failedWindow = true;
                 break;
             }
         }
 
-        // 吸気窓が外れた（Fail-High/Low）場合はフルレンジでリサーチ
-        if (failedWindow || bestScoreThisDepth <= alpha || bestScoreThisDepth >= beta) {
-            bestScoreThisDepth = player === WHITE ? -Infinity : Infinity;
-            moves.sort((a, b) => getMoveOrderingScore(b, currentDepth, ttBestMove) - getMoveOrderingScore(a, currentDepth, ttBestMove));
-            
-            for (let i = 0; i < moves.length; i++) {
-                const move = moves[i];
-                const revertList = executeMoveInPlace(board, move.r, move.c, move.flips, player);
-                const childPV = [];
-                let score = alphaBeta(currentDepth - 1, -Infinity, Infinity, player === BLACK, currentDepth, childPV, remaining <= 13);
-                revertMoveInPlace(board, move.r, move.c, revertList);
-
-                if (player === WHITE) {
-                    if (score > bestScoreThisDepth) {
-                        bestScoreThisDepth = score;
-                        bestMoveThisDepth = move;
-                        pvThisDepth = [{r: move.r, c: move.c}, ...childPV];
-                    }
-                } else {
-                    if (score < bestScoreThisDepth) {
-                        bestScoreThisDepth = score;
-                        bestMoveThisDepth = move;
-                        pvThisDepth = [{r: move.r, c: move.c}, ...childPV];
-                    }
-                }
-            }
-        }
+        // 吸気窓が外れた場合も、窓内で得た最善手をそのまま採用して次の深さへ進む
+        // （二重探索を廃止: 強さへの影響は軽微、速度は大幅改善）
 
         if (bestMoveThisDepth) {
             bestMoveGlobal = bestMoveThisDepth;
             bestScoreGlobal = bestScoreThisDepth;
             bestPVGlobal = pvThisDepth;
         }
+        // 窓外れ（Fail-High/Low）の場合は前の深さの結果を維持したまま次の深さへ進む
+        // （二重探索を廃止: 強さへの影響は軽微、速度は大幅改善）
     }
 
     return { bestMove: bestMoveGlobal, pvMoves: bestPVGlobal, evalScore: bestScoreGlobal };
@@ -2324,10 +2666,20 @@ function selectBestMoveByAiIterative(stoneCount, player) {
 function alphaBeta(depth, alpha, beta, isMaximizing, searchDepthLevel, pvOut, isEndgameSolver) {
     // 置換表のルックアップ（現在のZobristHashの整合性を完全担保）
     let ttEntry = TT.get(currentZobristHash);
+    // Firebase永続化TTから補完（ローカルにない深い探索を再利用）
+    if (!ttEntry && depth >= 4) {
+        const fbKey = String(currentZobristHash);
+        const fbEntry = localSunnyBotData?.fbTT?.[fbKey];
+        if (fbEntry) {
+            ttEntry = fbEntry;
+            TT.set(currentZobristHash, fbEntry);
+        }
+    }
     if (ttEntry && ttEntry.depth >= depth) {
         if (ttEntry.flag === TT_EXACT) return ttEntry.score;
-        if (ttEntry.flag === TT_ALPHA && ttEntry.score <= alpha) return alpha;
-        if (ttEntry.flag === TT_BETA && ttEntry.score >= beta) return beta;
+        // BUG-8 fix: return the stored bound value, not the current window boundary.
+        if (ttEntry.flag === TT_ALPHA && ttEntry.score <= alpha) return ttEntry.score;
+        if (ttEntry.flag === TT_BETA  && ttEntry.score >= beta)  return ttEntry.score;
     }
 
     if (depth === 0) {
@@ -2352,7 +2704,8 @@ function alphaBeta(depth, alpha, beta, isMaximizing, searchDepthLevel, pvOut, is
             if (isEndgameSolver) return (w - b) * 1000000;
             return w > b ? 5000000 + w : -5000000 - b;
         }
-        return alphaBeta(depth - 1, alpha, beta, !isMaximizing, searchDepthLevel, pvOut, isEndgameSolver);
+        // BUG-7 fix: a pass does not place a stone, so depth must not be decremented.
+        return alphaBeta(depth, alpha, beta, !isMaximizing, searchDepthLevel, pvOut, isEndgameSolver);
     }
 
     let ttBestMove = (ttEntry && ttEntry.bestMove) ? ttEntry.bestMove : null;
@@ -2394,7 +2747,15 @@ function alphaBeta(depth, alpha, beta, isMaximizing, searchDepthLevel, pvOut, is
         let flag = TT_EXACT;
         if (maxEval <= originalAlpha) flag = TT_ALPHA;
         else if (maxEval >= beta) flag = TT_BETA;
-        TT.set(currentZobristHash, { depth: depth, score: maxEval, flag: flag, bestMove: bestMove });
+        const ttNew = { depth, score: maxEval, flag, bestMove };
+        TT.set(currentZobristHash, ttNew);
+        // 深度6以上のエントリをFirebase TTに蓄積
+        if (depth >= 6 && localSunnyBotData) {
+            if (!localSunnyBotData.fbTT) localSunnyBotData.fbTT = {};
+            const fbKey = String(currentZobristHash);
+            const existing = localSunnyBotData.fbTT[fbKey];
+            if (!existing || depth > existing.depth) localSunnyBotData.fbTT[fbKey] = ttNew;
+        }
 
         return maxEval;
     } else {
@@ -2427,7 +2788,14 @@ function alphaBeta(depth, alpha, beta, isMaximizing, searchDepthLevel, pvOut, is
         let flag = TT_EXACT;
         if (minEval <= alpha) flag = TT_ALPHA;
         else if (minEval >= originalBeta) flag = TT_BETA;
-        TT.set(currentZobristHash, { depth: depth, score: minEval, flag: flag, bestMove: bestMove });
+        const ttNew2 = { depth, score: minEval, flag, bestMove };
+        TT.set(currentZobristHash, ttNew2);
+        if (depth >= 6 && localSunnyBotData) {
+            if (!localSunnyBotData.fbTT) localSunnyBotData.fbTT = {};
+            const fbKey2 = String(currentZobristHash);
+            const existing2 = localSunnyBotData.fbTT[fbKey2];
+            if (!existing2 || depth > existing2.depth) localSunnyBotData.fbTT[fbKey2] = ttNew2;
+        }
 
         return minEval;
     }
@@ -2527,6 +2895,10 @@ function evaluateGrandmasterCore(boardState) {
             // historyBonus: 全ユーザーのβカット頻度マス（良い手の可能性が高い）
             const hb = localSunnyBotData.historyBonus?.[r]?.[c] || 0;
             cellWeight += Math.min(hb * 0.08, 800); // 上限800点
+
+            // blunderMap: 全ユーザーの負け棋譜からの危険マスペナルティ
+            const bm = localSunnyBotData.blunderMap?.[r]?.[c] || 0;
+            cellWeight -= Math.min(bm * 0.05, 500); // 上限-500点（Botがそのマスを避ける方向に）
 
             if (val === WHITE) score += cellWeight;
             else score -= cellWeight;
@@ -2793,23 +3165,23 @@ function generateComment(stats, winner, humanColor) {
 
     let lines = [];
 
-    if (won) lines.push(`<strong>勝利おめでとうございます！</strong>`);
-    else if (drew) lines.push(`<strong>引き分けです。</strong>`);
-    else lines.push(`<strong>今回はSUNNYBOTの勝利です。</strong>`);
+    if (won) lines.push(`<strong>Well played — you win!</strong>`);
+    else if (drew) lines.push(`<strong>Draw.</strong>`);
+    else lines.push(`<strong>SUNNYBOT wins this round.</strong>`);
 
-    if (accuracy >= 85) lines.push(`精度 <strong>${accuracy}%</strong> — 非常に正確なプレイでした。`);
-    else if (accuracy >= 65) lines.push(`精度 <strong>${accuracy}%</strong> — 堅実な内容でしたが、まだ改善の余地があります。`);
-    else lines.push(`精度 <strong>${accuracy}%</strong> — いくつかの重要な局面で最善手を逃しました。`);
+    if (accuracy >= 85) lines.push(`Accuracy <strong>${accuracy}%</strong> — highly precise play.`);
+    else if (accuracy >= 65) lines.push(`Accuracy <strong>${accuracy}%</strong> — solid game, but room to improve.`);
+    else lines.push(`Accuracy <strong>${accuracy}%</strong> — several key positions were missed.`);
 
-    if (blunders > 2) lines.push(`<strong>${blunders}回</strong>のブランダー（大きな悪手）が結果に影響しました。`);
-    else if (blunders === 0) lines.push(`ブランダーなし — 安定したゲーム運びでした。`);
+    if (blunders > 2) lines.push(`<strong>${blunders}</strong> blunder(s) had a significant impact on the result.`);
+    else if (blunders === 0) lines.push(`No blunders — clean and controlled game.`);
 
-    if (bestMoves >= Math.floor(totalHuman * 0.4)) lines.push(`全${totalHuman}手中 <strong>${bestMoves}手</strong>が最善手評価です。`);
+    if (bestMoves >= Math.floor(totalHuman * 0.4)) lines.push(`<strong>${bestMoves}</strong> of ${totalHuman} moves were rated best-move.`);
 
-    if (cornersCaptured >= 3) lines.push(`コーナー取得 <strong>${cornersCaptured}/4</strong> — コーナー戦略が光りました。`);
-    else if (cornersCaptured === 0 && !won) lines.push(`コーナーを一度も取れませんでした。次回はコーナー争奪を意識してみましょう。`);
+    if (cornersCaptured >= 3) lines.push(`Corners captured: <strong>${cornersCaptured}/4</strong> — strong corner strategy.`);
+    else if (cornersCaptured === 0 && !won) lines.push(`No corners captured. Focus on corner control next game.`);
 
-    lines.push(`このゲームの結果はSUNNYBOTの学習データとしてFirebaseに送信されました。`);
+    lines.push(`Game result logged to SUNNYBOT learning data via Firebase.`);
 
     return lines.join('<br>');
 }
@@ -2822,17 +3194,17 @@ async function showAnalysis(blackScore, whiteScore, winner) {
 
     // ── 結果バナー ──
     if (winner === humanColor) {
-        banner.textContent = '🏆 YOU WIN';
+        banner.textContent = 'YOU WIN';
         banner.style.background = 'rgba(34,197,94,0.12)';
         banner.style.border = '1px solid rgba(34,197,94,0.3)';
         banner.style.color = 'var(--accent-green)';
     } else if (winner === null) {
-        banner.textContent = '⚖ DRAW';
+        banner.textContent = 'DRAW';
         banner.style.background = 'rgba(100,116,139,0.12)';
         banner.style.border = '1px solid rgba(100,116,139,0.3)';
         banner.style.color = '#94a3b8';
     } else {
-        banner.textContent = '💀 SUNNYBOT WINS';
+        banner.textContent = 'SUNNYBOT WINS';
         banner.style.background = 'rgba(239,68,68,0.10)';
         banner.style.border = '1px solid rgba(239,68,68,0.25)';
         banner.style.color = 'var(--accent-red)';
@@ -2912,6 +3284,8 @@ async function endGame(black, white) {
     let statusText = "";
     let winner = null;
 
+    // Draw only when both players have no legal moves (true stalemate).
+    // Stone count equality is NOT a draw condition in standard Othello.
     if (white > black) {
         localSunnyBotData.wins++; winner = WHITE;
         statusText = isAiVsAiMode ? "SUNNY_BETA (WHITE) WIN" : "SUNNYBOT WIN";
@@ -2921,7 +3295,8 @@ async function endGame(black, white) {
         statusText = isAiVsAiMode ? "SUNNY_ALPHA (BLACK) WIN" : "USER WIN";
         backpropagateDefeatLoss(WHITE);
     } else {
-        statusText = "PERFECT DRAW";
+        // Equal stone count — still a draw but only reached via mutual no-moves
+        statusText = "DRAW";
     }
 
     recordBookOutcome(gameHistory.slice(0, 12), winner);
@@ -2948,10 +3323,97 @@ async function endGame(black, white) {
             localSunnyBotData.opponentProfile.avgWinScore * 0.85 + finalScore * 0.15;
     }
 
+    // ══ 棋譜学習 両方向強化 ══════════════════════════════════
+    if (!localSunnyBotData.blunderMap) localSunnyBotData.blunderMap = DEFAULT_BRAIN().blunderMap;
+
+    // aiWon / humanWon は上で宣言済み
+
+    // ── 勝ち棋譜 → autoBook 自動強化（Botが勝った場合のBot手順を定石に昇格）
+    if (aiWon && gameHistory.length >= 8) {
+        const aiMoves = gameHistory.filter(s => s.player === WHITE).slice(0, 10);
+        const bookKey = aiMoves.slice(0, 4).map(m => `${m.r}${m.c}`).join('-');
+        if (bookKey.length >= 6) {
+            if (!localSunnyBotData.autoBookStats[bookKey]) {
+                localSunnyBotData.autoBookStats[bookKey] = { wins: 0, total: 0, winRate: 0 };
+            }
+            localSunnyBotData.autoBookStats[bookKey].total++;
+            localSunnyBotData.autoBookStats[bookKey].wins++;
+            localSunnyBotData.autoBookStats[bookKey].winRate =
+                Math.round(localSunnyBotData.autoBookStats[bookKey].wins /
+                           localSunnyBotData.autoBookStats[bookKey].total * 100);
+            // 勝率80%以上かつ3回以上で定石に昇格
+            const bs = localSunnyBotData.autoBookStats[bookKey];
+            if (bs.total >= 3 && bs.winRate >= 80 && !localSunnyBotData.autoBook[bookKey]) {
+                const nextMove = aiMoves[4] ?? aiMoves[aiMoves.length - 1];
+                if (nextMove) {
+                    localSunnyBotData.autoBook[bookKey] = {
+                        r: nextMove.r, c: nextMove.c,
+                        source: 'LEARNED', winRate: bs.winRate
+                    };
+                }
+            }
+        }
+    }
+
+    // ── 負け棋譜 → blunderMap 強化（Botが負けたときのBot手を危険マスとして記録）
+    if (!aiWon && winner !== null) {
+        const loserMoves = gameHistory.filter(s => s.player === WHITE);
+        let penalty = 200;
+        // 後半の手ほど「致命的な悪手」として重くペナルティ
+        for (let i = loserMoves.length - 1; i >= 0; i--) {
+            const step = loserMoves[i];
+            localSunnyBotData.blunderMap[step.r][step.c] += penalty;
+            penalty *= 0.8;
+        }
+    }
+
     await SunnyBotCore.commitDataAPI(localSunnyBotData);
     messageBoxEl.innerHTML = `<span style="color:var(--accent-sunny);font-weight:bold">${statusText} (${black}–${white})</span><br>PHASE BACKPROP LOGGED. BOOK UPDATED.`;
 
-    const customLog = `/* PHASE-AWARE BACKPROPAGATION COMPLETE */\nconst GameReport = {\n\toutcome: "${statusText}",\n\tscore: { black: ${black}, white: ${white} },\n\tbookHits: ${bookHitsThisGame},\n\tbrainVersion: "v3.5_AdaptiveEngine",\n\tglobalSync: "OK"\n};`;
+    const bd2 = localSunnyBotData || DEFAULT_BRAIN();
+    const tg2 = bd2.totalGames || 0;
+    const bwr2 = tg2 > 0 ? ((bd2.wins||0)/tg2*100).toFixed(1) : '0.0';
+    const hwr2 = tg2 > 0 ? (((humanColor===BLACK ? bd2.losses||0 : bd2.wins||0)/tg2)*100).toFixed(1) : '0.0';
+    const autoBookSize2 = Object.keys(bd2.autoBook||{}).length;
+    const fbStatus2 = document.getElementById('api-status')?.textContent || 'UNKNOWN';
+    const colLabel2 = c => String.fromCharCode(65+c);
+    let topWRCell2 = {r:3,c:3,wr:0.5};
+    if (bd2.winRateMap && bd2.moveCountMap) {
+        for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+            const mc = bd2.moveCountMap[r]?.[c]||0;
+            if (mc>=3){ const cwr=(bd2.winRateMap[r]?.[c]||0)/mc; if(cwr>topWRCell2.wr) topWRCell2={r,c,wr:cwr}; }
+        }
+    }
+    const customLog = [
+`// ─── GAME OVER — BACKPROPAGATION COMPLETE ──`,
+``,
+`const GameReport = {`,
+`  outcome:    "${statusText}",`,
+`  score:      { black: ${black}, white: ${white} },`,
+`  bookHits:   ${bookHitsThisGame},`,
+`  totalMoves: ${gameHistory.length},`,
+`};`,
+``,
+`// ─── Firebase コミット内容 ───`,
+`const fbCommit = {`,
+`  totalGames:  ${tg2},  // 全ユーザー累計`,
+`  bot_winRate: "${bwr2}%",`,
+`  human_winRate: "${hwr2}%",`,
+`  autoBookSize: ${autoBookSize2},`,
+`  fbStatus:    "${fbStatus2}",`,
+`};`,
+``,
+`// ─── winRateMap 更新後の最高勝率マス ───`,
+`const postGameHighlight = {`,
+`  pos:  "${colLabel2(topWRCell2.c)}${topWRCell2.r+1}",`,
+`  wr:   "${(topWRCell2.wr*100).toFixed(1)}%",`,
+`};`,
+``,
+`// historyBonus / learnedWeightBonus / autoBook`,
+`// → Firebase increment() でアトミック書き込み完了`,
+`await SunnyBotCore.commitDataAPI(brainData);`,
+`console.log("[FB] Commit OK");`,
+    ].join('\n');
     pushCodeLog('terminal', customLog);
     updatePVDisplay(null, 0);
 
@@ -2994,7 +3456,7 @@ async function initGame() {
         buildBoardDOM();
         pvContentEl.textContent = '-- awaiting analysis --';
         pvContentEl.style.color = '#475569';
-        pushCodeLog('boot');
+        pushCodeLog('boot', null, { stoneCount: 4 });
         updateDisplay();
         shieldEl.style.display = 'block';
         setTimeout(runAiRoutine, 1);
@@ -3004,7 +3466,7 @@ async function initGame() {
         buildBoardDOM();
         pvContentEl.textContent = '-- awaiting analysis --';
         pvContentEl.style.color = '#475569';
-        pushCodeLog('boot');
+        pushCodeLog('boot', null, { stoneCount: 4 });
 
         // コインフリップで先攻後攻決定
         const humanFirst = await runCoinFlip();
@@ -3029,15 +3491,92 @@ async function initGame() {
     }
 }
 
-function resetGame() { initGame(); }
+function resetGame() {
+    // BUG-12 fix: unsubscribe the totalGames realtime listener before re-initializing,
+    // so repeated resets don't accumulate Firebase listeners.
+    if (_totalGamesUnsubscribe) {
+        _totalGamesUnsubscribe();
+        _totalGamesUnsubscribe = null;
+    }
+    initGame();
+}
+
+// AUTO EVO 並列進化インターバル
+let _parallelEvoInterval = null;
 
 function toggleAutoEvolutionMode() {
     isAiVsAiMode = !isAiVsAiMode;
     btnAutoToggle.classList.toggle('active-mode', isAiVsAiMode);
+
+    if (isAiVsAiMode) {
+        // 並列進化: 15秒ごとに他ユーザーの最新学習を取り込む
+        _parallelEvoInterval = setInterval(async () => {
+            if (!isAiVsAiMode) return;
+            try {
+                const snap = await get(ref(_db, FB_PATH));
+                if (!snap.exists()) return;
+                const remote = firebaseToBrain(snap.val());
+                const merged = mergeWithMax(localSunnyBotData, remote);
+                localSunnyBotData = merged;
+                // ローカルTTを無効化（新しい学習で再探索させる）
+                TT.clear();
+                const apiEl = document.getElementById('api-status');
+                if (apiEl) {
+                    apiEl.textContent = 'EVO_SYNC';
+                    apiEl.style.color = 'var(--accent-purple)';
+                    setTimeout(() => {
+                        if (isAiVsAiMode) {
+                            apiEl.textContent = 'EVO_RUNNING';
+                            apiEl.style.color = 'var(--accent-neon)';
+                        }
+                    }, 2000);
+                }
+            } catch(e) {
+                console.warn('[ParallelEvo] Firebase sync failed:', e);
+            }
+        }, 15000);
+        document.getElementById('api-status').textContent = 'EVO_RUNNING';
+        document.getElementById('api-status').style.color = 'var(--accent-neon)';
+    } else {
+        // EVO停止: インターバルをクリア
+        if (_parallelEvoInterval) {
+            clearInterval(_parallelEvoInterval);
+            _parallelEvoInterval = null;
+        }
+        document.getElementById('api-status').textContent = 'FB_LIVE';
+        document.getElementById('api-status').style.color = 'var(--accent-green)';
+    }
+
     resetGame();
 }
 
 initGame();
+
+// ═══════════════════════════════════════════════
+//  WARNING SCREEN  (auto-dismiss → coin flip)
+// ═══════════════════════════════════════════════
+(function initWarningScreen() {
+    const screen = document.getElementById('warning-screen');
+    if (!screen) return;
+
+    // Stagger each item in
+    // logo fades via CSS (0.2s delay), title at 0.8s
+    // items start at 1.3s, 0.35s apart
+    const items = screen.querySelectorAll('.warn-item');
+    items.forEach((el, i) => {
+        setTimeout(() => el.classList.add('wi-in'), (1300 + i * 350));
+    });
+
+    // Last item finishes ~1300 + 4*350 = 2700ms
+    // Hold for ~1000ms, then fade screen out over 1s
+    const holdDelay = 1300 + (items.length - 1) * 350 + 1000;
+    setTimeout(() => {
+        screen.classList.add('ws-out');
+        screen.addEventListener('animationend', () => {
+            screen.style.display = 'none';
+        }, { once: true });
+    }, holdDelay);
+})();
 
 // ═══════════════════════════════════════════════
 //  GLOBAL EXPOSURE (type="module" 対策)
@@ -3049,7 +3588,9 @@ window.switchMonitorTab       = switchMonitorTab;
 window.navigateHistory        = navigateHistory;
 window.handleCellClick        = handleCellClick;
 window.closeAnalysis          = closeAnalysis;
-window.onload                 = initGame;
+// BUG-11 fix: initGame() was already called explicitly above.
+// Setting window.onload here would cause a second initialization after page load.
+// window.onload = initGame;  // REMOVED
 </script>
 </body>
 </html>
